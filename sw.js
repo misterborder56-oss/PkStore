@@ -3,7 +3,7 @@
 //////////////////////////////
 
 /* sube el número cuando cambies archivos para renovar la copia guardada */
-const CACHE = "pkview-v2";
+const CACHE = "pkStore";
 
 const ARCHIVOS = [
     "./",
