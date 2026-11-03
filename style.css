@@ -1,0 +1,713 @@
+/* ----------------------------------
+variables (tema oscuro por defecto)
+---------------------------------- */
+:root {
+    --fondo: rgb(18, 19, 24);
+    --caja: rgb(19, 22, 30);
+    --tarjeta: #1a1f2b;
+    --borde: rgb(58, 63, 76);
+    --texto: #7f889b;
+    --input: #222936;
+    --input-texto: #e6e9f0;
+    --input-sombra: rgba(55, 125, 244, 0.35);
+    --boton: white;
+    --boton-texto: black;
+    --boton-borde: transparent;
+    --azul: rgb(55, 125, 244);
+    --estrella: #f5b942;
+    --peligro: #ff6b6b;
+}
+
+/* ----------------------------------
+temas 
+---------------------------------- */
+.Bdc {
+    --fondo: white;
+    --caja: white;
+    --tarjeta: #f4f6fa;
+    --borde: rgb(200, 205, 215);
+    --texto: #4c5361;
+    --input: #eef1f6;
+    --input-texto: #1b1f2a;
+    --input-sombra: rgba(55, 125, 244, 0.25);
+    --boton-borde: black;
+    --estrella: #d98a00;
+    --peligro: #d63b3b;
+}
+
+/* ----------------------------------
+base
+---------------------------------- */
+* {
+    box-sizing: border-box;
+}
+
+[hidden] {
+    display: none !important;
+}
+
+.body {
+    margin: 0;
+    padding: calc(16px + env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom));
+    min-height: 100vh;
+    background-color: var(--fondo);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior-y: contain;
+    transition: background-color 0.2s;
+}
+
+.apks,
+.ajustes,
+#inicio {
+    text-align: center;
+}
+
+.Text {
+    color: var(--texto);
+    text-align: center;
+    font-size: 1.6rem;
+    margin: 16px 0;
+}
+
+.nota {
+    margin: 6px 0;
+    color: var(--texto);
+    font-size: 0.85rem;
+    overflow-wrap: anywhere;
+}
+
+/* ----------------------------------
+cajas
+---------------------------------- */
+.cajita {
+    position: relative;
+    width: 100%;
+    max-width: 460px;
+    min-height: 300px;
+    margin: 0 auto 16px;
+    padding: 10px;
+    border: solid 1px var(--borde);
+    border-radius: 10px;
+    background-color: var(--caja);
+    text-align: center;
+    transition: background-color 0.2s, border-color 0.2s;
+}
+
+.grande {
+    min-height: 500px;
+}
+
+/* cajas con botón cerrar abajo: dejan espacio para que no tape el contenido */
+.conCerrar {
+    padding-bottom: 80px;
+}
+
+.detalle {
+    text-align: left;
+}
+
+/* ----------------------------------
+desaparecidos
+---------------------------------- */
+#DvRegister,
+#DvLogin,
+#inicio,
+.input.imagen,
+.ajustes,
+.apks,
+#SubirFile,
+#DvDetalle,
+#DvFile,
+#DvCuenta {
+    display: none;
+}
+
+#inicio,
+#DvAjustes,
+#DvApk,
+#DvActualizaciones {
+    max-width: 460px;
+    margin: 0 auto;
+}
+
+/* ----------------------------------
+botones
+---------------------------------- */
+.btn {
+    display: block;
+    width: 70%;
+    max-width: 280px;
+    height: 50px;
+    margin: 10px auto;
+    padding: 5px;
+    border: solid 1px var(--boton-borde);
+    border-radius: 14px;
+    background-color: var(--boton);
+    color: var(--boton-texto);
+    font-family: inherit;
+    font-size: 20px;
+    cursor: pointer;
+    transition: filter 0.15s, transform 0.1s, background-color 0.15s;
+}
+
+.btn:hover {
+    filter: brightness(0.92);
+}
+
+.btn:active {
+    transform: scale(0.97);
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: default;
+}
+
+/* botón azul (acción principal) */
+.btn.azul {
+    border-color: transparent;
+    background-color: var(--azul);
+    box-shadow: 0 4px 8px rgba(55, 125, 244, 0.4);
+    color: white;
+}
+
+/* botón de eliminar */
+.btn.peligro {
+    background-color: transparent;
+    border-color: var(--peligro);
+    color: var(--peligro);
+}
+
+/* botón a todo lo ancho */
+.btn.ancho {
+    width: 100%;
+    max-width: none;
+    margin: 12px 0 4px;
+}
+
+/* botón de temas */
+#Cambiar {
+    background-color: var(--azul);
+    color: white;
+}
+
+.Bdc #Cambiar {
+    background-color: white;
+    color: black;
+}
+
+/* botón cerrar */
+.cerrar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: calc(100% - 20px);
+    max-width: none;
+}
+
+/* ----------------------------------
+subir archivos
+---------------------------------- */
+/* Botón subir archivo */
+.File {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+
+    width: 55px;
+    max-width: none;
+    height: 55px;
+    padding: 0;
+    margin: 15px;
+
+    background-color: var(--azul);
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 4px 8px rgba(55, 125, 244, 0.4);
+    color: white;
+
+    cursor: pointer;
+    transition: 0.15s;
+}
+
+/* Imagen */
+.File img {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+}
+
+/* el icono de imagen tiene fondo blanco: se funde con el azul */
+.icono-img {
+    mix-blend-mode: multiply;
+}
+
+/* Efecto al pulsar */
+.File:active {
+    transform: scale(0.9);
+    filter: brightness(0.85);
+}
+
+/* Archivo elegido antes de publicar */
+.seleccion {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    margin: 4px 0 8px;
+}
+
+.prev {
+    width: 72px;
+    height: 72px;
+    border-radius: 12px;
+    object-fit: cover;
+}
+
+.sel-texto {
+    max-width: 90%;
+    margin: 0;
+    color: var(--texto);
+    font-size: 0.9rem;
+    overflow-wrap: anywhere;
+}
+
+/* archivo / página web */
+.tipos {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+/* ----------------------------------
+chips (tipo de publicación y calificación)
+---------------------------------- */
+.chip {
+    padding: 6px 14px;
+    border: solid 1px var(--borde);
+    border-radius: 999px;
+    background-color: var(--input);
+    color: var(--input-texto);
+    font-family: inherit;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background-color 0.15s, border-color 0.15s, transform 0.1s;
+}
+
+.chip:active {
+    transform: scale(0.95);
+}
+
+.chip.activo {
+    border-color: var(--azul);
+    background-color: var(--azul);
+    color: white;
+}
+
+/* ----------------------------------
+barra de búsqueda
+---------------------------------- */
+.barra {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.barra .File {
+    flex-shrink: 0;
+    margin: 0;
+}
+
+.buscador {
+    flex: 1;
+    width: auto;
+    margin: 0;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+/* ----------------------------------
+lista de aplicaciones
+---------------------------------- */
+.lista {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 6px;
+    text-align: left;
+}
+
+.apk {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px;
+    border: solid 1px var(--borde);
+    border-radius: 12px;
+    background-color: var(--tarjeta);
+    cursor: pointer;
+    transition: border-color 0.15s, transform 0.1s;
+}
+
+.apk:hover {
+    border-color: var(--azul);
+}
+
+.apk:active {
+    transform: scale(0.98);
+}
+
+.apk-foto {
+    flex-shrink: 0;
+    width: 64px;
+    height: 64px;
+    border-radius: 10px;
+    object-fit: cover;
+    background-color: var(--input);
+}
+
+/* aplicación sin foto */
+.apk-foto.vacia {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 28px;
+}
+
+.apk-info {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.apk-nombre {
+    color: var(--input-texto);
+    font-size: 1rem;
+    overflow-wrap: anywhere;
+}
+
+.apk-autor,
+.apk-fecha {
+    color: var(--texto);
+    font-size: 0.85rem;
+}
+
+.apk-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+    color: var(--texto);
+    font-size: 0.85rem;
+}
+
+.apk-estrella {
+    color: var(--estrella);
+}
+
+.insignia {
+    align-self: flex-start;
+    margin-top: 2px;
+    padding: 1px 8px;
+    border-radius: 999px;
+    background-color: var(--input);
+    color: var(--texto);
+    font-size: 0.75rem;
+}
+
+.apk-vacio {
+    padding: 24px 8px;
+    color: var(--texto);
+    text-align: center;
+}
+
+/* ----------------------------------
+detalle de una aplicación
+---------------------------------- */
+.detalle-foto {
+    display: block;
+    width: 100%;
+    max-height: 220px;
+    border-radius: 12px;
+    object-fit: cover;
+}
+
+.detalle-foto.vacia {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 140px;
+    background-color: var(--input);
+    font-size: 48px;
+}
+
+.detalle-titulo {
+    margin: 12px 0 4px;
+    color: var(--input-texto);
+    font-size: 1.3rem;
+    overflow-wrap: anywhere;
+}
+
+.detalle-autor {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--texto);
+    font-size: 0.9rem;
+}
+
+.detalle-texto {
+    margin: 10px 0;
+    color: var(--input-texto);
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+    white-space: pre-line;
+}
+
+.detalle-seccion {
+    margin: 20px 0 8px;
+    color: var(--texto);
+    font-size: 0.95rem;
+}
+
+/* números: calificación, votos, descargas */
+.datos {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin: 12px 0;
+}
+
+.datos.dos {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+.dato {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px 4px;
+    border: solid 1px var(--borde);
+    border-radius: 12px;
+    background-color: var(--tarjeta);
+}
+
+.dato strong {
+    color: var(--input-texto);
+    font-size: 1.15rem;
+}
+
+.dato span {
+    color: var(--texto);
+    font-size: 0.8rem;
+}
+
+/* calificar del 1 al 10 */
+.puntos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.chip.punto {
+    min-width: 36px;
+    padding: 6px 0;
+    text-align: center;
+}
+
+/* ----------------------------------
+comentarios
+---------------------------------- */
+.comentario {
+    position: relative;
+    display: flex;
+    gap: 10px;
+    padding: 10px 28px 10px 0;
+    border-top: solid 1px var(--borde);
+}
+
+.comentario-cuerpo {
+    flex: 1;
+    min-width: 0;
+}
+
+.comentario-autor {
+    color: var(--input-texto);
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.comentario-fecha {
+    margin-left: 8px;
+    color: var(--texto);
+    font-size: 0.8rem;
+    font-weight: 400;
+}
+
+.comentario-texto {
+    margin: 2px 0 0;
+    color: var(--input-texto);
+    font-size: 0.95rem;
+    overflow-wrap: anywhere;
+}
+
+.apk-borrar {
+    position: absolute;
+    top: 6px;
+    right: 0;
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--texto);
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.apk-borrar:hover {
+    background-color: var(--input);
+}
+
+.form-comentario {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.form-comentario .input {
+    flex: 1;
+    width: auto;
+    min-width: 0;
+    margin: 0;
+}
+
+.form-comentario .btn {
+    flex-shrink: 0;
+    width: auto;
+    height: 42px;
+    margin: 0;
+    padding: 0 16px;
+    font-size: 16px;
+}
+
+/* ----------------------------------
+avatares
+---------------------------------- */
+.avatar {
+    display: inline-flex;
+    flex-shrink: 0;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    border-radius: 50%;
+    background-color: var(--azul);
+    color: white;
+    font-weight: 600;
+}
+
+.avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.avatar.chico {
+    width: 28px;
+    height: 28px;
+    font-size: 0.8rem;
+}
+
+.avatar.enorme {
+    display: flex;
+    width: 96px;
+    height: 96px;
+    margin: 8px auto;
+    box-shadow: 0 4px 8px rgba(55, 125, 244, 0.4);
+    font-size: 2.2rem;
+    cursor: pointer;
+}
+
+/* ----------------------------------
+actualizaciones
+---------------------------------- */
+.version {
+    padding: 12px;
+    border: solid 1px var(--borde);
+    border-radius: 12px;
+    background-color: var(--tarjeta);
+}
+
+.version-titulo {
+    display: inline-block;
+    margin: 0 10px 0 0;
+    color: var(--input-texto);
+    font-size: 1.1rem;
+}
+
+.version ul {
+    margin: 8px 0 0;
+    padding-left: 18px;
+    color: var(--input-texto);
+}
+
+.version li {
+    margin: 4px 0;
+    font-size: 0.95rem;
+}
+
+/* ----------------------------------
+campos de texto
+---------------------------------- */
+.input {
+    display: block;
+    width: 80%;
+    margin: 20px auto;
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    background-color: var(--input);
+    color: var(--input-texto);
+    font: inherit;
+    font-size: 16px;
+    outline: none;
+    box-shadow: 0 5px 8px var(--input-sombra);
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+textarea.input {
+    resize: none;
+}
+
+.input::placeholder {
+    color: var(--texto);
+}
+
+.input:focus {
+    box-shadow: 0 5px 12px var(--azul);
+}
+
+/* ----------------------------------
+accesibilidad
+---------------------------------- */
+.btn:focus-visible,
+.File:focus-visible,
+.chip:focus-visible,
+.apk:focus-visible,
+.apk-borrar:focus-visible,
+.avatar:focus-visible {
+    outline: 2px solid var(--azul);
+    outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    * {
+        transition: none !important;
+    }
+}
