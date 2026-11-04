@@ -2,11 +2,16 @@
 //CONFIGURACIÓN (Supabase)
 //////////////////////////////
 
-
+/* Pega aquí los datos de tu proyecto (Project Settings > API).
+   Si los dejas vacíos, la app guarda todo solo en este dispositivo. */
 const SUPABASE_URL = "https://uwqmmnlxapcxejtnnhzs.supabase.co";
-const SUPABASE_KEY = "sb_publishable_4kSjmVRyLvesfJo_gkLVtQ_Dy0dbG72";  
+const SUPABASE_KEY = "sb_publishable_4kSjmVRyLvesfJo_gkLVtQ_Dy0dbG72";   /* clave "anon" o "publishable", nunca la service_role */
 
 const usarSupabase = Boolean(SUPABASE_URL && SUPABASE_KEY && window.supabase);
+
+/* códigos de descarga: cuántos se generan y cuánto dura el período para desactivar el enlace */
+const TOTAL_CODIGOS = 50;
+const HORA = 60 * 60 * 1000;
 
 
 //////////////////////////////
@@ -37,6 +42,27 @@ function limpiarNombre(nombre) {
     return nombre.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^A-Za-z0-9._-]/g, "_");
 }
 
+/* código al azar con formato XXXX-XXXX-XXXX (sin letras que se confunden) */
+function generarCodigo() {
+    const letras = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    const bytes = new Uint8Array(12);
+    let texto = "";
+
+    if (window.crypto && crypto.getRandomValues) crypto.getRandomValues(bytes);
+    else bytes.forEach((_, i) => { bytes[i] = Math.floor(Math.random() * 256); });
+
+    bytes.forEach((byte, i) => {
+        texto += letras[byte % letras.length];
+        if (i % 4 === 3 && i < 11) texto += "-";
+    });
+    return texto;
+}
+
+/* para comparar códigos sin importar guiones, espacios ni mayúsculas */
+function limpiarCodigo(texto) {
+    return String(texto || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+}
+
 
 //////////////////////////////
 //MODO LOCAL (IndexedDB en este dispositivo)
@@ -46,12 +72,13 @@ function crearDatosLocal() {
     /* abrir la base: cada tienda guarda un tipo de dato */
     function abrirBD() {
         return new Promise((resolve, reject) => {
-            const pedido = indexedDB.open("pkview", 2);
+            const pedido = indexedDB.open("pkview", 3);
 
             pedido.onupgradeneeded = () => {
                 const db = pedido.result;
                 if (!db.objectStoreNames.contains("apks")) db.createObjectStore("apks", { keyPath: "id", autoIncrement: true });
                 if (!db.objectStoreNames.contains("comentarios")) db.createObjectStore("comentarios", { keyPath: "id", autoIncrement: true });
+                if (!db.objectStoreNames.contains("codigos")) db.createObjectStore("codigos", { keyPath: "id", autoIncrement: true });
                 if (!db.objectStoreNames.contains("usuarios")) db.createObjectStore("usuarios", { keyPath: "id" });
                 if (!db.objectStoreNames.contains("votos")) db.createObjectStore("votos", { keyPath: "id" });
             };
@@ -95,13 +122,13 @@ function crearDatosLocal() {
         return { id: u.id, email: u.email, nombre: u.nombre, foto: urlDe(u.foto) };
     }
 
+    async function todosLosUsuarios() {
+        return transaccion(["usuarios"], "readonly", t => t.usuarios.getAll());
+    }
+
     /* ids de las apks que esta persona ya descargó */
     function listaDescargas(usuario) {
         return JSON.parse(localStorage.getItem("descargas:" + usuario.id) || "[]");
-    }
-
-    async function todosLosUsuarios() {
-        return transaccion(["usuarios"], "readonly", t => t.usuarios.getAll());
     }
 
     return {
@@ -177,10 +204,13 @@ function crearDatosLocal() {
                     nombre: a.nombre,
                     descripcion: a.descripcion || "",
                     tipo: a.tipo || "archivo",
+                    acceso: a.acceso || "libre",
                     url: a.url || null,
                     nombreArchivo: a.nombreArchivo || "",
                     archivoPath: null,
                     fotoUrl: urlDe(a.imagen),
+                    capturas: (a.capturas || []).map(c => urlDe(c)),
+                    videoUrl: urlDe(a.video),
                     descargas: a.descargas || 0,
                     promedio: suyos.length ? Math.round(suma / suyos.length * 10) / 10 : 0,
                     votos: suyos.length,
@@ -189,43 +219,72 @@ function crearDatosLocal() {
             });
         },
 
-        async publicar(usuario, { nombre, descripcion, tipo, url, archivo, imagen }) {
-            await transaccion(["apks"], "readwrite", t => t.apks.add({
-                nombre: nombre,
-                descripcion: descripcion,
-                tipo: tipo,
-                url: url || null,
-                autorId: usuario.id,
-                fecha: Date.now(),
-                archivo: archivo || null,
-                nombreArchivo: archivo ? archivo.name : "",
-                imagen: imagen || null,
-                descargas: 0
-            }));
-        },
+        /* con acceso "codigo" se crean los 50 códigos de un solo uso */
+        async publicar(usuario, { nombre, descripcion, tipo, url, archivo, imagen, capturas, video, acceso }) {
+            await transaccion(["apks", "codigos"], "readwrite", t => {
+                const pedido = t.apks.add({
+                    nombre: nombre,
+                    descripcion: descripcion,
+                    tipo: tipo,
+                    acceso: tipo === "archivo" ? (acceso || "libre") : "libre",
+                    url: url || null,
+                    autorId: usuario.id,
+                    fecha: Date.now(),
+                    archivo: archivo || null,
+                    nombreArchivo: archivo ? archivo.name : "",
+                    imagen: imagen || null,
+                    capturas: capturas || [],
+                    video: video || null,
+                    descargas: 0
+                });
 
-        async eliminar(id) {
-            await transaccion(["apks", "comentarios", "votos"], "readwrite", t => {
-                t.apks.delete(id);
-
-                const comentarios = t.comentarios.getAll();
-                comentarios.onsuccess = () => comentarios.result
-                    .filter(c => c.apkId === id).forEach(c => t.comentarios.delete(c.id));
-
-                const votos = t.votos.getAll();
-                votos.onsuccess = () => votos.result
-                    .filter(v => v.apkId === id).forEach(v => t.votos.delete(v.id));
+                if (tipo === "archivo" && acceso === "codigo") {
+                    pedido.onsuccess = () => {
+                        const codigos = new Set();
+                        while (codigos.size < TOTAL_CODIGOS) codigos.add(generarCodigo());
+                        codigos.forEach(codigo => t.codigos.add({
+                            apkId: pedido.result,
+                            codigo: codigo,
+                            usuarioId: null,
+                            canjeadoEn: null
+                        }));
+                    };
+                }
             });
         },
 
-        /* ---------- descargas ---------- */
-        async archivoUrl(apk) {
+        async eliminar(id) {
+            await transaccion(["apks", "comentarios", "votos", "codigos"], "readwrite", t => {
+                t.apks.delete(id);
+
+                [["comentarios", "id"], ["votos", "id"], ["codigos", "id"]].forEach(([nombre]) => {
+                    const todos = t[nombre].getAll();
+                    todos.onsuccess = () => todos.result
+                        .filter(x => x.apkId === id).forEach(x => t[nombre].delete(x.id));
+                });
+            });
+        },
+
+        /* texto de un archivo html (para el visualizador) */
+        async htmlTexto(apk) {
             const a = await transaccion(["apks"], "readonly", t => t.apks.get(apk.id));
             if (!a || !a.archivo) throw new Error("Este archivo ya no está disponible");
+            return a.archivo.text();
+        },
+
+        /* ---------- descargas ---------- */
+        async archivoUrl(usuario, apk, descargar) {
+            const a = await transaccion(["apks"], "readonly", t => t.apks.get(apk.id));
+            if (!a || !a.archivo) throw new Error("Este archivo ya no está disponible");
+
+            if (apk.acceso === "codigo" && apk.autorId !== usuario.id) {
+                const estado = await this.estadoDesbloqueo(usuario, apk.id);
+                if (!estado.desbloqueada) throw new Error("Desbloquea la descarga con un código");
+            }
             return URL.createObjectURL(a.archivo);
         },
 
-        /* las apks cuentan una descarga por persona; las páginas cuentan cada visita */
+        /* las apks cuentan una descarga por persona; las páginas y html cuentan cada visita */
         async yaDescargue(usuario, apkId) {
             return listaDescargas(usuario).includes(apkId);
         },
@@ -249,6 +308,85 @@ function crearDatosLocal() {
                     }
                 };
             });
+        },
+
+        /* ---------- códigos de descarga ---------- */
+        /* solo para quien publicó la apk */
+        async codigos(apkId) {
+            const todos = await transaccion(["codigos"], "readonly", t => t.codigos.getAll());
+
+            return todos.filter(c => c.apkId === apkId).map(c => ({
+                id: c.id,
+                codigo: c.codigo,
+                usado: Boolean(c.usuarioId),
+                canjeadoEn: c.canjeadoEn
+            }));
+        },
+
+        async generarCodigos(apkId) {
+            await transaccion(["codigos"], "readwrite", t => {
+                const pedido = t.codigos.getAll();
+                pedido.onsuccess = () => {
+                    if (pedido.result.some(c => c.apkId === apkId)) return;
+
+                    const nuevos = new Set();
+                    while (nuevos.size < TOTAL_CODIGOS) nuevos.add(generarCodigo());
+                    nuevos.forEach(codigo => t.codigos.add({ apkId: apkId, codigo: codigo, usuarioId: null, canjeadoEn: null }));
+                };
+            });
+        },
+
+        async estadoDesbloqueo(usuario, apkId) {
+            const todos = await transaccion(["codigos"], "readonly", t => t.codigos.getAll());
+            const c = todos.find(x => x.apkId === apkId && x.usuarioId === usuario.id);
+
+            return { desbloqueada: Boolean(c), canjeadoEn: c ? c.canjeadoEn : null };
+        },
+
+        async canjear(usuario, apkId, codigo) {
+            const limpio = limpiarCodigo(codigo);
+            let error = null;
+
+            await transaccion(["codigos"], "readwrite", t => {
+                const pedido = t.codigos.getAll();
+                pedido.onsuccess = () => {
+                    const suyos = pedido.result.filter(c => c.apkId === apkId);
+                    const libre = suyos.find(c => !c.usuarioId && limpiarCodigo(c.codigo) === limpio);
+
+                    if (suyos.some(c => c.usuarioId === usuario.id)) error = "Ya desbloqueaste esta aplicación";
+                    else if (!libre) error = "Código inválido o ya usado";
+                    else {
+                        libre.usuarioId = usuario.id;
+                        libre.canjeadoEn = Date.now();
+                        t.codigos.put(libre);
+                    }
+                };
+            });
+
+            if (error) throw new Error(error);
+        },
+
+        /* durante la primera hora, y si aún no la descargó, el código se restablece */
+        async desactivarEnlace(usuario, apkId) {
+            let error = null;
+
+            await transaccion(["codigos"], "readwrite", t => {
+                const pedido = t.codigos.getAll();
+                pedido.onsuccess = () => {
+                    const c = pedido.result.find(x => x.apkId === apkId && x.usuarioId === usuario.id);
+
+                    if (!c) error = "No tienes un enlace activo";
+                    else if (listaDescargas(usuario).includes(apkId)) error = "Ya descargaste esta aplicación";
+                    else if (Date.now() - c.canjeadoEn > HORA) error = "Pasó más de una hora desde que lo activaste";
+                    else {
+                        c.usuarioId = null;
+                        c.canjeadoEn = null;
+                        t.codigos.put(c);
+                    }
+                };
+            });
+
+            if (error) throw new Error(error);
         },
 
         /* ---------- calificaciones ---------- */
@@ -398,10 +536,13 @@ function crearDatosSupabase() {
                 nombre: a.nombre,
                 descripcion: a.descripcion || "",
                 tipo: a.tipo,
+                acceso: a.acceso || "libre",
                 url: a.url,
                 nombreArchivo: a.nombre_archivo || "",
                 archivoPath: a.archivo_path,
                 fotoUrl: urlPublica("imagenes", a.imagen_path),
+                capturas: (a.capturas || []).map(ruta => urlPublica("imagenes", ruta)),
+                videoUrl: urlPublica("videos", a.video_path),
                 descargas: a.descargas,
                 promedio: Number(a.promedio),
                 votos: Number(a.votos),
@@ -409,47 +550,94 @@ function crearDatosSupabase() {
             }));
         },
 
-        async publicar(usuario, { nombre, descripcion, tipo, url, archivo, imagen }) {
-            const marca = Date.now();
+        /* con acceso "codigo" el archivo va a un lugar privado y el servidor crea los 50 códigos */
+        async publicar(usuario, { nombre, descripcion, tipo, url, archivo, imagen, capturas, video, acceso }) {
+            const base = usuario.id + "/" + Date.now();
+            const protegido = tipo === "archivo" && acceso === "codigo";
+            const rutasCapturas = [];
             let archivoPath = null;
             let imagenPath = null;
+            let videoPath = null;
 
             if (archivo) {
-                archivoPath = usuario.id + "/" + marca + "-" + limpiarNombre(archivo.name);
-                await subir("archivos", archivoPath, archivo);
+                archivoPath = base + "-" + limpiarNombre(archivo.name);
+                await subir(protegido ? "protegidos" : "archivos", archivoPath, archivo);
             }
 
             if (imagen) {
-                imagenPath = usuario.id + "/" + marca + "-foto." + extension(imagen.name);
+                imagenPath = base + "-icono." + extension(imagen.name);
                 await subir("imagenes", imagenPath, imagen);
             }
 
-            ok(await sb.from("apks").insert({
+            const lista = capturas || [];
+            for (let i = 0; i < lista.length; i++) {
+                const ruta = base + "-captura" + i + "." + extension(lista[i].name);
+                await subir("imagenes", ruta, lista[i]);
+                rutasCapturas.push(ruta);
+            }
+
+            if (video) {
+                videoPath = base + "-video." + extension(video.name);
+                await subir("videos", videoPath, video);
+            }
+
+            const nueva = ok(await sb.from("apks").insert({
                 autor_id: usuario.id,
                 nombre: nombre,
                 descripcion: descripcion,
                 tipo: tipo,
+                acceso: tipo === "archivo" ? (acceso || "libre") : "libre",
                 url: url || null,
                 archivo_path: archivoPath,
                 nombre_archivo: archivo ? archivo.name : null,
-                imagen_path: imagenPath
-            }));
+                imagen_path: imagenPath,
+                capturas: rutasCapturas,
+                video_path: videoPath
+            }).select("id").single());
+
+            if (protegido) await this.generarCodigos(nueva.id);
         },
 
         async eliminar(id) {
-            const fila = ok(await sb.from("apks").select("archivo_path, imagen_path").eq("id", id).single());
+            const fila = ok(await sb.from("apks")
+                .select("archivo_path, imagen_path, capturas, video_path, acceso").eq("id", id).single());
 
             ok(await sb.from("apks").delete().eq("id", id));
 
-            if (fila.archivo_path) await sb.storage.from("archivos").remove([fila.archivo_path]);
-            if (fila.imagen_path) await sb.storage.from("imagenes").remove([fila.imagen_path]);
+            if (fila.archivo_path) {
+                await sb.storage.from(fila.acceso === "codigo" ? "protegidos" : "archivos").remove([fila.archivo_path]);
+            }
+
+            const imagenes = (fila.capturas || []).concat(fila.imagen_path ? [fila.imagen_path] : []);
+            if (imagenes.length) await sb.storage.from("imagenes").remove(imagenes);
+            if (fila.video_path) await sb.storage.from("videos").remove([fila.video_path]);
+        },
+
+        /* texto de un archivo html (para el visualizador) */
+        async htmlTexto(apk) {
+            const enlace = urlPublica("archivos", apk.archivoPath);
+            if (!enlace) throw new Error("Este archivo ya no está disponible");
+
+            const respuesta = await fetch(enlace);
+            if (!respuesta.ok) throw new Error("No se pudo cargar el archivo");
+            return respuesta.text();
         },
 
         /* ---------- descargas ---------- */
-        /* descargar = true fuerza la descarga; false abre el archivo */
-        async archivoUrl(apk, descargar) {
+        /* descargar = true fuerza la descarga; false abre el archivo.
+           Los archivos con código solo dan enlace a quien lo desbloqueó (lo decide el servidor). */
+        async archivoUrl(usuario, apk, descargar) {
             if (!apk.archivoPath) throw new Error("Este archivo ya no está disponible");
-            return urlPublica("archivos", apk.archivoPath, descargar ? { download: apk.nombreArchivo || true } : undefined);
+
+            const opciones = descargar ? { download: apk.nombreArchivo || true } : undefined;
+
+            if (apk.tipo === "archivo" && apk.acceso === "codigo") {
+                const { data, error } = await sb.storage.from("protegidos").createSignedUrl(apk.archivoPath, 300, opciones);
+                if (error) throw new Error("Desbloquea la descarga con un código");
+                return data.signedUrl;
+            }
+
+            return urlPublica("archivos", apk.archivoPath, opciones);
         },
 
         async yaDescargue(usuario, apkId) {
@@ -458,9 +646,46 @@ function crearDatosSupabase() {
             return Boolean(fila);
         },
 
-        /* el servidor decide: una descarga por persona en apks, cada visita en páginas */
+        /* el servidor decide: una descarga por persona en apks, cada visita en páginas y html */
         async contar(usuario, apk) {
             ok(await sb.rpc("contar_descarga", { p_apk: apk.id }));
+        },
+
+        /* ---------- códigos de descarga ---------- */
+        /* el servidor solo se los muestra a quien publicó la apk */
+        async codigos(apkId) {
+            const filas = ok(await sb.from("codigos_descarga").select("id, codigo, usado_por, usado_en")
+                .eq("apk_id", apkId).order("id", { ascending: true }));
+
+            return filas.map(c => ({
+                id: c.id,
+                codigo: c.codigo,
+                usado: Boolean(c.usado_por),
+                canjeadoEn: c.usado_en ? new Date(c.usado_en).getTime() : null
+            }));
+        },
+
+        /* crea los 50 códigos (el servidor solo lo permite una vez y solo al autor) */
+        async generarCodigos(apkId) {
+            ok(await sb.rpc("generar_codigos", { p_apk: apkId, p_cantidad: TOTAL_CODIGOS }));
+        },
+
+        async estadoDesbloqueo(usuario, apkId) {
+            const fila = ok(await sb.from("accesos").select("activado_en")
+                .eq("apk_id", apkId).eq("usuario_id", usuario.id).maybeSingle());
+
+            return {
+                desbloqueada: Boolean(fila),
+                canjeadoEn: fila ? new Date(fila.activado_en).getTime() : null
+            };
+        },
+
+        async canjear(usuario, apkId, codigo) {
+            ok(await sb.rpc("canjear_codigo", { p_apk: apkId, p_codigo: codigo }));
+        },
+
+        async desactivarEnlace(usuario, apkId) {
+            ok(await sb.rpc("devolver_codigo", { p_apk: apkId }));
         },
 
         /* ---------- calificaciones ---------- */
@@ -504,4 +729,3 @@ function crearDatosSupabase() {
 //Datos: lo único que usa app.js
 //////////////////////////////
 const Datos = usarSupabase ? crearDatosSupabase() : crearDatosLocal();
-al();
