@@ -4,11 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#121318">
-    <meta name="google-adsense-account" content="ca-pub-6260361546358810">
     <meta name="description" content="Publica y descarga aplicaciones y páginas">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-title" content="pkview">
+    <meta name="apple-mobile-web-app-title" content="PkStore">
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="icon-192.png">
     <link rel="apple-touch-icon" href="icon-192.png">
@@ -97,204 +96,345 @@ login
 
     </div>
 
+
+<!------------------------------------
+tienda: menú lateral + contenido
+------------------------------------>
+    <div id="Shell">
+
+        <div id="Fondo" class="fondo" onclick="CerrarMenu()"></div>
+
+<!------------------------------------
+panel lateral
+------------------------------------>
+        <aside id="Menu" class="menu" aria-label="menú">
+
+            <div class="menu-marca">
+                <span class="logo">pk</span>
+                <span>PkStore</span>
+            </div>
+
+            <nav class="menu-nav">
+                <button type="button" class="menu-item" data-pantalla="DvInicio" onclick="InicioBtn()">
+                    <span class="menu-icono">⌂</span>Inicio
+                </button>
+
+                <button type="button" id="ApkBtn" class="menu-item" data-pantalla="DvApk" data-filtro="archivo" onclick="ApkBtn()">
+                    <span class="menu-icono">▦</span>Apps
+                </button>
+
+                <button type="button" class="menu-item" data-pantalla="DvApk" data-filtro="web" onclick="PaginasBtn()">
+                    <span class="menu-icono">◍</span>Páginas
+                </button>
+
+                <button type="button" class="menu-item" data-pantalla="DvFile" onclick="AbrirDow()">
+                    <span class="menu-icono">＋</span>Publicar
+                </button>
+
+                <button type="button" class="menu-item" data-pantalla="DvCuenta" onclick="AbrirCuenta()">
+                    <span class="menu-icono">☺</span>Mi cuenta
+                </button>
+
+                <button type="button" class="menu-item" data-pantalla="DvActualizaciones" onclick="AbrirActualizaciones()">
+                    <span class="menu-icono">✦</span>Actualizaciones
+                </button>
+
+                <button type="button" class="menu-item" data-pantalla="DvAjustes" onclick="OpcBtn()">
+                    <span class="menu-icono">⚙</span>Ajustes
+                </button>
+            </nav>
+
+            <button type="button" class="menu-usuario" onclick="AbrirCuenta()">
+                <span id="MenuAvatar" class="avatar chico"></span>
+                <span id="MenuNombre" class="menu-nombre"></span>
+            </button>
+
+        </aside>
+
+        <div class="principal">
+
+            <header class="barra-sup">
+                <button type="button" class="icono-btn menu-btn" aria-label="abrir menú" onclick="AbrirMenu()">☰</button>
+
+                <div class="buscador-caja">
+                    <span class="lupa">⌕</span>
+                    <input
+                        id="BuscarApk"
+                        class="buscador-sup"
+                        type="search"
+                        placeholder="buscar en PkStore"
+                        aria-label="buscar en PkStore"
+                        autocomplete="off"
+                        oninput="BuscarInput()"
+                    >
+                </div>
+
+                <button type="button" class="btn azul chico" onclick="AbrirDow()">Publicar</button>
+            </header>
+
+            <main class="contenido">
+
 <!------------------------------------
 inicio
 ------------------------------------>
-    <div id="inicio">
-        <h1 class="Text">PkStore</h1>
+                <section class="pantalla" id="DvInicio">
 
-        <button type="button" class="btn uno" aria-label="ajustes" onclick="OpcBtn()">⏣</button>
+                    <div class="hero">
+                        <div>
+                            <h1>Descubre y comparte</h1>
+                            <p>Apps, páginas web y archivos HTML en un solo lugar.</p>
+                        </div>
+                        <button type="button" class="btn azul chico" onclick="AbrirDow()">Publicar algo</button>
+                    </div>
 
-        <button type="button" id="ApkBtn" class="btn" onclick="ApkBtn()">apks</button>
+                    <div id="InicioFilas"></div>
 
-        <button type="button" class="btn" onclick="AbrirCuenta()">mi cuenta</button>
-
-        <button type="button" class="btn" onclick="AbrirActualizaciones()">actualizaciones</button>
-    </div>
-
-
+                </section>
 
 <!------------------------------------
-apks
+apks y páginas
 ------------------------------------>
+                <section class="pantalla" id="DvApk">
 
-    <div class="div apks" id="DvApk">
+                    <h1 id="TituloLista" class="titulo-pantalla">Apps</h1>
 
-        <h1 id="tex" class="Text">aplicaciones</h1>
+                    <div class="chips-fila">
+                        <button type="button" id="FiltroTodo" class="chip" onclick="Filtrar('todo')">Todo</button>
+                        <button type="button" id="FiltroArchivo" class="chip" onclick="Filtrar('archivo')">Apps</button>
+                        <button type="button" id="FiltroWeb" class="chip" onclick="Filtrar('web')">Páginas</button>
+                    </div>
 
-        <div class="cajita conCerrar">
+                    <div id="ListaApks" class="rejilla"></div>
 
-            <div class="barra">
-                <input
-                    id="BuscarApk"
-                    class="input buscador"
-                    type="search"
-                    placeholder="buscar aplicaciones"
-                    aria-label="buscar aplicaciones"
-                    autocomplete="off"
-                    oninput="pintarApks()"
-                >
-
-                <button type="button" class="btn File" aria-label="publicar" onclick="AbrirDow()">+</button>
-            </div>
-
-            <div id="ListaApks" class="lista"></div>
-
-            <button type="button" id="CerrarApk" class="btn cerrar" aria-label="cerrar" onclick="CerrarApk()">x</button>
-
-        </div>
-
-    </div>
+                </section>
 
 <!------------------------------------
 detalle de una apk
 ------------------------------------>
+                <section class="pantalla" id="DvDetalle">
 
-    <div class="cajita conCerrar detalle" id="DvDetalle">
+                    <button type="button" class="btn chico atras" onclick="CerrarDetalle()">← volver</button>
 
-        <div id="ContenidoDetalle"></div>
+                    <div id="ContenidoDetalle"></div>
 
-        <button type="button" class="btn cerrar" aria-label="cerrar" onclick="CerrarDetalle()">x</button>
-
-    </div>
+                </section>
 
 <!------------------------------------
 publicar
 ------------------------------------>
+                <section class="pantalla" id="DvFile">
 
-    <div class="cajita conCerrar" id="DvFile">
-        <h1 class="Text">Publicar</h1>
+                    <h1 class="titulo-pantalla">Publicar</h1>
 
-        <div class="tipos">
-            <button type="button" id="TipoArchivo" class="chip activo" onclick="ElegirTipo('archivo')">archivo</button>
-            <button type="button" id="TipoPagina" class="chip" onclick="ElegirTipo('pagina')">página web</button>
-        </div>
+                    <div class="formulario">
 
-        <input
-            id="InpApkNombre"
-            class="input"
-            type="text"
-            maxlength="30"
-            placeholder="nombre"
-            aria-label="nombre"
-        >
+                        <p class="campo-titulo">¿Qué vas a publicar?</p>
+                        <div class="chips-fila">
+                            <button type="button" id="TipoArchivo" class="chip activo" onclick="ElegirTipo('archivo')">apk / archivo</button>
+                            <button type="button" id="TipoPagina" class="chip" onclick="ElegirTipo('pagina')">página web (url)</button>
+                            <button type="button" id="TipoHtml" class="chip" onclick="ElegirTipo('html')">archivo html</button>
+                        </div>
 
-        <textarea
-            id="InpApkDescripcion"
-            class="input"
-            rows="3"
-            maxlength="300"
-            placeholder="descripción"
-            aria-label="descripción"
-        ></textarea>
+                        <div id="CampoAcceso">
+                            <p class="campo-titulo">Descarga</p>
+                            <div class="chips-fila">
+                                <button type="button" id="AccesoLibre" class="chip activo" onclick="ElegirAcceso('libre')">libre</button>
+                                <button type="button" id="AccesoCodigo" class="chip" onclick="ElegirAcceso('codigo')">con código de un solo uso</button>
+                            </div>
+                            <p id="NotaAcceso" class="nota" hidden>
+                                Se crean {TOTAL} códigos que solo tú puedes ver y copiar. Cada código desbloquea la descarga para una persona.
+                            </p>
+                        </div>
 
-        <input
-            id="InpApkUrl"
-            class="input"
-            type="url"
-            placeholder="https://mi-pagina.com"
-            aria-label="enlace de la página"
-            hidden
-        >
+                        <input
+                            id="InpApkNombre"
+                            class="input"
+                            type="text"
+                            maxlength="30"
+                            placeholder="nombre"
+                            aria-label="nombre"
+                        >
 
-        <input class="input imagen" id="SubirFile" type="file">
+                        <textarea
+                            id="InpApkDescripcion"
+                            class="input"
+                            rows="3"
+                            maxlength="300"
+                            placeholder="descripción"
+                            aria-label="descripción"
+                        ></textarea>
 
-        <input class="input imagen" id="SubirImagen" type="file" accept="image/*">
+                        <input
+                            id="InpApkUrl"
+                            class="input"
+                            type="url"
+                            placeholder="https://mi-pagina.com"
+                            aria-label="enlace de la página"
+                            hidden
+                        >
 
-        <label for="SubirFile" id="LabelArchivo" class="File">
-            <img src="icon1.png" alt="Subir archivo">
-        </label>
+                        <input class="input imagen" id="SubirFile" type="file">
+                        <input class="input imagen" id="SubirImagen" type="file" accept="image/*">
+                        <input class="input imagen" id="SubirCapturas" type="file" accept="image/*" multiple>
+                        <input class="input imagen" id="SubirVideo" type="file" accept="video/*">
 
-        <label for="SubirImagen" class="File">
-            <img class="icono-img" src="icon2.png" alt="Subir imagen">
-        </label>
+                        <label for="SubirFile" id="LabelArchivo" class="subida">
+                            <span class="subida-icono"><img src="icon1.png" alt=""></span>
+                            <span class="subida-texto">
+                                <strong id="TituloArchivo">Archivo</strong>
+                                <small id="PrevArchivo">ningún archivo elegido</small>
+                            </span>
+                        </label>
 
-        <div class="seleccion">
-            <img id="PrevImagen" class="prev" alt="Imagen elegida" hidden>
-            <p id="PrevArchivo" class="sel-texto">ningún archivo elegido</p>
-        </div>
+                        <label for="SubirImagen" class="subida">
+                            <span class="subida-icono"><img class="icono-img" src="icon2.png" alt=""></span>
+                            <span class="subida-texto">
+                                <strong>Icono</strong>
+                                <small id="PrevIcono">ningún icono elegido</small>
+                            </span>
+                        </label>
 
-        <button type="button" id="BtnPublicar" class="btn azul" onclick="PublicarBtn()">publicar</button>
+                        <label for="SubirCapturas" class="subida">
+                            <span class="subida-icono"><img class="icono-img" src="icon2.png" alt=""></span>
+                            <span class="subida-texto">
+                                <strong>Capturas</strong>
+                                <small id="PrevCapturasTexto">hasta 8 imágenes</small>
+                            </span>
+                        </label>
+                        <div id="PrevCapturas" class="prev-fila"></div>
 
-        <button type="button" class="btn cerrar" aria-label="cerrar" onclick="cerrarSbFile()">x</button>
-    </div>
+                        <label for="SubirVideo" class="subida">
+                            <span class="subida-icono">▶</span>
+                            <span class="subida-texto">
+                                <strong>Video</strong>
+                                <small id="PrevVideo">un solo video (opcional)</small>
+                            </span>
+                        </label>
+
+                        <button type="button" id="BtnPublicar" class="btn azul ancho" onclick="PublicarBtn()">publicar</button>
+
+                    </div>
+
+                </section>
 
 <!------------------------------------
 cuenta
 ------------------------------------>
+                <section class="pantalla" id="DvCuenta">
 
-    <div class="cajita conCerrar" id="DvCuenta">
-        <h1 class="Text">Mi cuenta</h1>
+                    <h1 class="titulo-pantalla">Mi cuenta</h1>
 
-        <label for="SubirFoto" id="AvatarCuenta" class="avatar enorme" aria-label="cambiar foto de perfil"></label>
-        <input class="input imagen" id="SubirFoto" type="file" accept="image/*">
+                    <div class="perfil-cab">
+                        <label for="SubirFoto" id="AvatarCuenta" class="avatar enorme" aria-label="cambiar foto de perfil"></label>
+                        <input class="input imagen" id="SubirFoto" type="file" accept="image/*">
 
-        <p class="nota">toca la foto para cambiarla</p>
-        <p class="nota" id="CuentaCorreo"></p>
+                        <div class="perfil-datos">
+                            <p class="nota">toca la foto para cambiarla</p>
+                            <p class="nota" id="CuentaCorreo"></p>
 
-        <input
-            id="InpCuentaNombre"
-            class="input"
-            type="text"
-            minlength="4"
-            maxlength="20"
-            placeholder="nombre"
-            aria-label="nombre"
-        >
+                            <input
+                                id="InpCuentaNombre"
+                                class="input"
+                                type="text"
+                                minlength="4"
+                                maxlength="20"
+                                placeholder="nombre"
+                                aria-label="nombre"
+                            >
 
-        <div class="datos dos">
-            <div class="dato"><strong id="DatoPublicadas">0</strong><span>publicadas</span></div>
-            <div class="dato"><strong id="DatoCalificacion">—</strong><span>calificación</span></div>
-            <div class="dato"><strong id="DatoDescargas">0</strong><span>descargas de apks</span></div>
-            <div class="dato"><strong id="DatoVisitas">0</strong><span>visitas a páginas</span></div>
-        </div>
+                            <button type="button" id="BtnGuardarCuenta" class="btn azul chico" onclick="GuardarCuentaBtn()">guardar cambios</button>
+                        </div>
+                    </div>
 
-        <button type="button" id="BtnGuardarCuenta" class="btn azul" onclick="GuardarCuentaBtn()">guardar cambios</button>
+                    <div class="datos cuatro">
+                        <div class="dato"><strong id="DatoPublicadas">0</strong><span>publicadas</span></div>
+                        <div class="dato"><strong id="DatoCalificacion">—</strong><span>calificación</span></div>
+                        <div class="dato"><strong id="DatoDescargas">0</strong><span>descargas de apks</span></div>
+                        <div class="dato"><strong id="DatoVisitas">0</strong><span>visitas a páginas</span></div>
+                    </div>
 
-        <button type="button" class="btn" onclick="SalirBtn()">cerrar sesión</button>
+                    <h2 class="seccion">Mis publicaciones</h2>
+                    <div id="MisApks" class="rejilla"></div>
 
-        <button type="button" class="btn cerrar" aria-label="cerrar" onclick="CerrarCuenta()">x</button>
-    </div>
+                </section>
 
 <!------------------------------------
 actualizaciones
 ------------------------------------>
+                <section class="pantalla" id="DvActualizaciones">
 
-    <div class="div apks" id="DvActualizaciones">
+                    <h1 class="titulo-pantalla">Actualizaciones</h1>
 
-        <h1 class="Text">actualizaciones</h1>
+                    <div id="ListaActualizaciones" class="lista"></div>
 
-        <div class="cajita conCerrar">
-
-            <div id="ListaActualizaciones" class="lista"></div>
-
-            <button type="button" class="btn cerrar" aria-label="cerrar" onclick="CerrarActualizaciones()">x</button>
-
-        </div>
-
-    </div>
+                </section>
 
 <!------------------------------------
 ajustes
 ------------------------------------>
-    <div id="DvAjustes" class="div ajustes">
+                <section class="pantalla" id="DvAjustes">
 
-        <h1 id="texto" class="Text">Ajustes</h1>
-
-        <button type="button" class="btn dos" aria-label="cerrar" onclick="CerrarAjustes()">x</button>
+                    <h1 id="texto" class="titulo-pantalla">Ajustes</h1>
 
 <!------------------------------------
 temas
 ------------------------------------>
-        <button type="button" id="Cambiar" class="btn dos" aria-label="cambiar tema" onclick="Estilo()">☪︎</button>
+                    <div class="ajuste-fila">
+                        <span>Tema claro u oscuro</span>
+                        <button type="button" id="Cambiar" class="btn chico" aria-label="cambiar tema" onclick="Estilo()">☪︎</button>
+                    </div>
 
-        <button type="button" id="BtnInstalar" class="btn dos" onclick="InstalarBtn()" hidden>instalar app</button>
+                    <div class="ajuste-fila" id="FilaInstalar" hidden>
+                        <span>Instalar PkStore como app</span>
+                        <button type="button" id="BtnInstalar" class="btn azul chico" onclick="InstalarBtn()">instalar</button>
+                    </div>
 
-        <p class="nota" id="ModoDatos"></p>
+                    <div class="ajuste-fila">
+                        <span>Cerrar sesión</span>
+                        <button type="button" class="btn chico" onclick="SalirBtn()">salir</button>
+                    </div>
+
+                    <p class="nota" id="ModoDatos"></p>
+
+                </section>
+
+<!------------------------------------
+visualizador html
+------------------------------------>
+                <section class="pantalla" id="DvVisor">
+
+                    <div class="visor-cab">
+                        <button type="button" class="btn chico" onclick="CerrarVisor()">← volver</button>
+                        <strong id="VisorTitulo" class="visor-titulo"></strong>
+                    </div>
+
+                    <iframe
+                        id="VisorMarco"
+                        class="visor-marco"
+                        title="visualizador html"
+                        sandbox="allow-scripts allow-forms allow-popups allow-modals"
+                        referrerpolicy="no-referrer"
+                    ></iframe>
+
+                </section>
+
+            </main>
+        </div>
+
+        <div id="Lightbox" class="lightbox" hidden onclick="CerrarLightbox()">
+            <img id="LightboxImg" alt="">
+        </div>
 
     </div>
 
 
+    <script>
+        /* PWA: se registra aquí para que no dependa de que app.js cargue bien */
+        if ("serviceWorker" in navigator) {
+            navigator.serviceWorker.register("sw.js", { scope: "./" })
+                .catch(error => console.log("sin service worker", error));
+        }
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
     <script src="datos.js"></script>
     <script src="app.js"></script>
