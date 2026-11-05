@@ -392,6 +392,18 @@ temas
                         <button type="button" id="Cambiar" class="btn chico" aria-label="cambiar tema" onclick="Estilo()">☪︎</button>
                     </div>
 
+                    <div class="ajuste-fila">
+                        <div class="ajuste-texto">
+                            <span>Carpeta de descargas</span>
+                            <small id="CarpetaNombre" class="nota"></small>
+                        </div>
+                        <div class="guardado-botones">
+                            <button type="button" id="BtnCarpeta" class="btn azul chico" onclick="ElegirCarpetaBtn()">elegir</button>
+                            <button type="button" id="BtnQuitarCarpeta" class="btn chico" onclick="QuitarCarpetaBtn()" hidden>quitar</button>
+                        </div>
+                    </div>
+                    <p class="nota nota-ajuste" id="NotaCarpeta"></p>
+
                     <div class="ajuste-fila" id="FilaInstalar" hidden>
                         <span>Instalar PkStore como app</span>
                         <button type="button" id="BtnInstalar" class="btn azul chico" onclick="InstalarBtn()">instalar</button>
@@ -403,6 +415,55 @@ temas
                     </div>
 
                     <p class="nota" id="ModoDatos"></p>
+
+                </section>
+
+<!------------------------------------
+editor de archivos html (solo quien publicó)
+------------------------------------>
+                <section class="pantalla" id="DvEditor">
+
+                    <div class="editor-cab">
+                        <button type="button" class="btn chico" onclick="CerrarEditor()">← volver</button>
+                        <strong id="EditorTitulo" class="visor-titulo"></strong>
+                        <span id="EditorEstado" class="nota"></span>
+                    </div>
+
+                    <div class="editor-barra">
+                        <div class="chips-fila editor-pestanas">
+                            <button type="button" id="PestCodigo" class="chip activo" onclick="EditorPestana('codigo')">Código</button>
+                            <button type="button" id="PestVista" class="chip" onclick="EditorPestana('vista')">Vista previa</button>
+                        </div>
+
+                        <div class="guardado-botones">
+                            <button type="button" class="btn chico" onclick="document.getElementById('EditorArchivo').click()">Cargar un archivo</button>
+                            <button type="button" id="BtnEditorGuardar" class="btn azul chico" onclick="EditorGuardarBtn()">Guardar</button>
+                        </div>
+                    </div>
+
+                    <input class="input imagen" id="EditorArchivo" type="file" accept=".html,.htm,text/html">
+
+                    <div id="EditorZona" class="editor-zona">
+                        <textarea
+                            id="EditorCodigo"
+                            class="editor-codigo"
+                            spellcheck="false"
+                            autocapitalize="off"
+                            autocomplete="off"
+                            wrap="off"
+                            aria-label="código html"
+                        ></textarea>
+
+                        <iframe
+                            id="EditorVista"
+                            class="editor-vista"
+                            title="vista previa"
+                            sandbox="allow-scripts allow-forms allow-modals"
+                            referrerpolicy="no-referrer"
+                        ></iframe>
+                    </div>
+
+                    <p class="nota">Solo tú ves este editor. Al guardar, el archivo publicado se reemplaza (límite 2 MB).</p>
 
                 </section>
 
