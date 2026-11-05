@@ -103,6 +103,21 @@ desaparecidos
     display: none;
 }
 
+/* sin internet: se esconde lo que necesita conexión */
+.sin-red .menu-item[data-red],
+.sin-red .buscador-caja,
+.sin-red .barra-sup .btn {
+    display: none;
+}
+
+.aviso-red {
+    padding: 10px 20px;
+    background-color: var(--azul-suave);
+    color: var(--input-texto);
+    font-size: 0.9rem;
+    text-align: center;
+}
+
 /* ----------------------------------
 botones
 ---------------------------------- */
@@ -1293,16 +1308,28 @@ actualizaciones y ajustes
 }
 
 /* ----------------------------------
-visualizador html
+visualizador html (pantalla completa)
 ---------------------------------- */
-.visor-cab {
+.visor {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    display: none;
+    background-color: var(--fondo);
+}
+
+.visor-barra {
     display: flex;
     align-items: center;
     gap: 12px;
-    margin-bottom: 12px;
+    height: calc(52px + env(safe-area-inset-top));
+    padding: env(safe-area-inset-top) 10px 0;
+    border-bottom: solid 1px var(--borde);
+    background-color: var(--caja);
 }
 
 .visor-titulo {
+    flex: 1;
     min-width: 0;
     overflow: hidden;
     color: var(--input-texto);
@@ -1311,12 +1338,54 @@ visualizador html
 }
 
 .visor-marco {
+    display: block;
     width: 100%;
-    height: calc(100vh - 190px);
-    min-height: 420px;
+    height: calc(100% - 52px - env(safe-area-inset-top));
+    border: none;
+    background-color: white;
+}
+
+/* ----------------------------------
+descargas guardadas en el dispositivo
+---------------------------------- */
+.guardado {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
     border: solid 1px var(--borde);
     border-radius: 14px;
-    background-color: white;
+    background-color: var(--tarjeta);
+}
+
+.guardado-icono {
+    display: flex;
+    flex-shrink: 0;
+    justify-content: center;
+    align-items: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background-color: var(--input);
+    font-size: 1.5rem;
+}
+
+.guardado-texto {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-width: 0;
+    color: var(--input-texto);
+}
+
+.guardado-texto small {
+    color: var(--texto);
+}
+
+.guardado-botones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
 }
 
 /* ----------------------------------
