@@ -21,6 +21,7 @@ const PANTALLAS_TIENDA = [
     "DvCuenta",
     "DvActualizaciones",
     "DvAjustes",
+    "DvDescargas",
     "DvVisor"
 ];
 
@@ -117,6 +118,12 @@ function BuscarInput() {
     pintarApks();
 }
 
+/* descargas guardadas en el dispositivo (funcionan sin internet) */
+function DescargasBtn() {
+    ir("DvDescargas");
+    mostrarDescargas();
+}
+
 /* ajuste */
 function OpcBtn() {
     ir("DvAjustes");
@@ -159,6 +166,7 @@ function repintar(id) {
     if (id === "DvInicio") pintarInicio();
     else if (id === "DvApk") pintarApks();
     else if (id === "DvCuenta") mostrarCuenta();
+    else if (id === "DvDescargas") mostrarDescargas();
 }
 
 
@@ -314,6 +322,12 @@ function iniciarSesion(perfil) {
 
 /* nombre y foto abajo del panel lateral */
 function actualizarMenuUsuario() {
+    if (!usuario) {
+        ponerAvatar(document.getElementById("MenuAvatar"), "?", null);
+        document.getElementById("MenuNombre").textContent = "sin conexión";
+        return;
+    }
+
     ponerAvatar(document.getElementById("MenuAvatar"), usuario.nombre, usuario.foto);
     document.getElementById("MenuNombre").textContent = usuario.nombre;
 }
@@ -789,15 +803,16 @@ async function refrescarDetalle(id) {
         let propia = apk.autorId === usuario.id;
         let conCodigo = apk.tipo === "archivo" && apk.acceso === "codigo";
 
-        let [miVoto, comentarios, descargada, desbloqueo, codigos] = await Promise.all([
+        let [miVoto, comentarios, descargada, desbloqueo, codigos, guardada] = await Promise.all([
             Datos.miVoto(usuario, id),
             Datos.comentarios(id),
             Datos.yaDescargue(usuario, id),
             conCodigo && !propia ? Datos.estadoDesbloqueo(usuario, id) : null,
-            conCodigo && propia ? Datos.codigos(id) : null
+            conCodigo && propia ? Datos.codigos(id) : null,
+            apk.tipo === "html" ? leerOfflineUno(claveOffline(apk)) : null
         ]);
 
-        pintarDetalle(apk, { miVoto, comentarios, descargada, desbloqueo, codigos });
+        pintarDetalle(apk, { miVoto, comentarios, descargada, desbloqueo, codigos, guardada: Boolean(guardada) });
     } catch (error) {
         alert(error.message);
         CerrarDetalle();
@@ -983,7 +998,19 @@ function crearAcciones(apk, datos) {
     }
 
     if (apk.tipo === "html") {
-        caja.append(crearBoton("Abrir visualizador", "btn azul ancho", () => AbrirVisor(apk)));
+        caja.append(crearBoton("Abrir en pantalla completa", "btn azul ancho", () => AbrirVisor(apk)));
+
+        if (datos.guardada) {
+            caja.append(
+                crear("p", "nota", "Guardada en este dispositivo: se abre también sin internet."),
+                crearBoton("Quitar del dispositivo", "btn peligro chico", () => QuitarOfflineBtn(apk))
+            );
+        } else {
+            caja.append(
+                crear("p", "nota", "Descárgala para abrirla sin internet."),
+                crearBoton("Descargar para usar sin internet", "btn chico", () => GuardarOfflineBtn(apk))
+            );
+        }
         return caja;
     }
 
@@ -1272,31 +1299,205 @@ document.addEventListener("keydown", evento => {
 
 
 //////////////////////////////
-//Visualizador de archivos html
+//Guardar para usar sin internet
 //////////////////////////////
-let apkVisor = null;
 
-/* el html se muestra en un marco aislado: no puede tocar tu sesión ni tus datos */
-async function AbrirVisor(apk) {
-    let marco = document.getElementById("VisorMarco");
+/* base aparte, solo en este dispositivo: guarda el texto de cada html descargado */
+function abrirOffline() {
+    return new Promise((resolve, reject) => {
+        const pedido = indexedDB.open("pkview-offline", 1);
 
-    apkVisor = apk;
-    ir("DvVisor");
-    document.getElementById("VisorTitulo").textContent = apk.nombre;
-    marco.srcdoc = "<p style='font-family:sans-serif'>cargando...</p>";
+        pedido.onupgradeneeded = () => {
+            pedido.result.createObjectStore("paginas", { keyPath: "clave" });
+        };
+        pedido.onsuccess = () => resolve(pedido.result);
+        pedido.onerror = () => reject(pedido.error);
+    });
+}
+
+async function operacionOffline(modo, accion) {
+    const db = await abrirOffline();
+
+    return new Promise((resolve, reject) => {
+        const tx = db.transaction("paginas", modo);
+        const pedido = accion(tx.objectStore("paginas"));
+
+        tx.oncomplete = () => { db.close(); resolve(pedido ? pedido.result : undefined); };
+        tx.onerror = tx.onabort = () => { db.close(); reject(tx.error); };
+    });
+}
+
+const guardarOffline = item => operacionOffline("readwrite", tienda => tienda.put(item));
+const leerOffline = () => operacionOffline("readonly", tienda => tienda.getAll());
+const leerOfflineUno = clave => operacionOffline("readonly", tienda => tienda.get(clave));
+const borrarOffline = clave => operacionOffline("readwrite", tienda => tienda.delete(clave));
+
+function claveOffline(apk) {
+    return Datos.modo + ":" + apk.id;
+}
+
+/* descarga el html y lo deja en el dispositivo */
+async function GuardarOfflineBtn(apk) {
+    try {
+        let html = await Datos.htmlTexto(apk);
+
+        await guardarOffline({
+            clave: claveOffline(apk),
+            nombre: apk.nombre,
+            autor: apk.autor,
+            html: html,
+            guardadoEn: Date.now()
+        });
+
+        /* pide al navegador no borrar lo guardado cuando falte espacio */
+        if (navigator.storage && navigator.storage.persist) navigator.storage.persist();
+
+        await refrescarDetalle(apk.id);
+    } catch (error) {
+        alert("No se pudo descargar: " + error.message);
+    }
+}
+
+async function QuitarOfflineBtn(apk) {
+    if (!confirm("¿Quitar esta página del dispositivo? Ya no se abrirá sin internet.")) return;
+
+    await borrarOffline(claveOffline(apk));
+    await refrescarDetalle(apk.id);
+}
+
+/* lista de lo guardado */
+async function mostrarDescargas() {
+    let lista = document.getElementById("ListaDescargas");
+    let guardados = [];
 
     try {
-        marco.srcdoc = await Datos.htmlTexto(apk);
-        await Datos.contar(usuario, apk);
+        guardados = await leerOffline();
+    } catch (error) {
+        console.log("no se pudo leer lo guardado", error);
+    }
+
+    if (!guardados.length) {
+        lista.replaceChildren(crear("p", "vacio",
+            "Todavía no descargaste nada. Abre un archivo HTML y toca “Descargar para usar sin internet”."));
+        return;
+    }
+
+    guardados.sort((a, b) => b.guardadoEn - a.guardadoEn);
+
+    lista.replaceChildren(...guardados.map(item => {
+        let fila = crear("div", "guardado");
+        let texto = crear("div", "guardado-texto");
+        let botones = crear("div", "guardado-botones");
+
+        texto.append(
+            crear("strong", "", item.nombre),
+            crear("small", "", "de " + item.autor + ", guardada el " + formatoFecha(item.guardadoEn))
+        );
+
+        botones.append(
+            crearBoton("Abrir", "btn azul chico", () => AbrirVisorGuardado(item)),
+            crearBoton("Quitar", "btn peligro chico", async () => {
+                if (!confirm("¿Quitar esta página del dispositivo?")) return;
+                await borrarOffline(item.clave);
+                mostrarDescargas();
+            })
+        );
+
+        fila.append(crear("div", "guardado-icono", "📄"), texto, botones);
+        return fila;
+    }));
+}
+
+
+//////////////////////////////
+//Visualizador de archivos html (pantalla completa)
+//////////////////////////////
+let apkVisor = null;
+let origenVisor = "detalle";
+
+/* los html no pueden usar localStorage dentro del marco aislado: se les da uno temporal para que no fallen */
+const ARREGLO_ALMACENAMIENTO = "<script>try{window.localStorage}catch(e){var m={};var s={" +
+    "getItem:function(k){return k in m?m[k]:null},setItem:function(k,v){m[k]=String(v)}," +
+    "removeItem:function(k){delete m[k]},clear:function(){m={}}," +
+    "key:function(i){return Object.keys(m)[i]||null}," +
+    "get length(){return Object.keys(m).length}};" +
+    "['localStorage','sessionStorage'].forEach(function(n){try{Object.defineProperty(window,n,{value:s,configurable:true})}catch(x){}})}<\/script>";
+
+function prepararHtml(html) {
+    if (/<head[^>]*>/i.test(html)) return html.replace(/<head[^>]*>/i, m => m + ARREGLO_ALMACENAMIENTO);
+    if (/<html[^>]*>/i.test(html)) return html.replace(/<html[^>]*>/i, m => m + ARREGLO_ALMACENAMIENTO);
+    return ARREGLO_ALMACENAMIENTO + html;
+}
+
+/* pantalla completa del dispositivo (algunos navegadores no la permiten: igual se ve a todo el ancho) */
+function pedirPantallaCompleta() {
+    let raiz = document.documentElement;
+
+    if (!document.fullscreenElement && raiz.requestFullscreen) {
+        raiz.requestFullscreen().catch(() => console.log("sin pantalla completa"));
+    }
+}
+
+function AlternarPantallaCompleta() {
+    if (document.fullscreenElement) document.exitFullscreen();
+    else pedirPantallaCompleta();
+}
+
+function mostrarVisor(titulo, html) {
+    document.getElementById("VisorTitulo").textContent = titulo;
+    document.getElementById("VisorMarco").srcdoc = prepararHtml(html);
+}
+
+/* desde el detalle: usa la copia guardada si existe; si no, la descarga ahora */
+async function AbrirVisor(apk) {
+    /* debe ir antes de cualquier espera para que el navegador lo permita */
+    pedirPantallaCompleta();
+
+    apkVisor = apk;
+    origenVisor = "detalle";
+    ir("DvVisor");
+    document.body.style.overflow = "hidden";
+    mostrarVisor(apk.nombre, "<p style='font-family:sans-serif'>cargando...</p>");
+
+    try {
+        let guardada = await leerOfflineUno(claveOffline(apk));
+
+        mostrarVisor(apk.nombre, guardada ? guardada.html : await Datos.htmlTexto(apk));
+
+        /* cuenta la visita solo si hay internet */
+        try {
+            await Datos.contar(usuario, apk);
+        } catch (error) {
+            console.log("no se contó la visita", error);
+        }
     } catch (error) {
         alert(error.message);
         CerrarVisor();
     }
 }
 
+/* desde Descargas: no necesita internet ni cuenta */
+function AbrirVisorGuardado(item) {
+    pedirPantallaCompleta();
+
+    origenVisor = "descargas";
+    ir("DvVisor");
+    document.body.style.overflow = "hidden";
+    mostrarVisor(item.nombre, item.html);
+}
+
 function CerrarVisor() {
     document.getElementById("VisorMarco").srcdoc = "";
-    abrirDetalle(apkVisor.id);
+    document.body.style.overflow = "";
+
+    if (document.fullscreenElement) document.exitFullscreen();
+
+    if (origenVisor === "descargas") {
+        ir("DvDescargas");
+        mostrarDescargas();
+    } else {
+        abrirDetalle(apkVisor.id);
+    }
 }
 
 
@@ -1306,6 +1507,15 @@ function CerrarVisor() {
 
 /* agrega una versión nueva arriba cada vez que cambies la página */
 const ACTUALIZACIONES = [
+    {
+        version: "2.1",
+        fecha: "2026-11-04",
+        cambios: [
+            "Los archivos HTML se abren en pantalla completa, como una página publicada",
+            "Puedes descargar un HTML al dispositivo y abrirlo sin internet desde Descargas",
+            "La app abre sin conexión y te lleva a tus descargas"
+        ]
+    },
     {
         version: "2.0",
         fecha: "2026-11-04",
@@ -1400,6 +1610,26 @@ async function InstalarBtn() {
 
 
 //////////////////////////////
+//Sin conexión
+//////////////////////////////
+
+/* esconde lo que necesita internet y avisa */
+function actualizarRed() {
+    let sinRed = !navigator.onLine;
+
+    document.getElementById("body").classList.toggle("sin-red", sinRed);
+    document.getElementById("AvisoRed").hidden = !sinRed;
+}
+
+window.addEventListener("offline", actualizarRed);
+window.addEventListener("online", () => {
+    actualizarRed();
+
+    /* si se abrió sin internet y sin cuenta, ahora sí se puede entrar */
+    if (!usuario) cargar();
+});
+
+//////////////////////////////
 //cargar
 //////////////////////////////
 aplicarTema(localStorage.getItem("temas"));
@@ -1409,6 +1639,15 @@ async function cargar() {
     document.getElementById("ModoDatos").textContent = Datos.modo === "nube"
         ? "datos guardados en la nube (Supabase)"
         : "datos guardados solo en este dispositivo";
+
+    actualizarRed();
+
+    /* sin internet: directo a lo que guardaste en el dispositivo */
+    if (!navigator.onLine) {
+        actualizarMenuUsuario();
+        DescargasBtn();
+        return;
+    }
 
     try {
         usuario = await Datos.sesion();
