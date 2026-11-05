@@ -265,11 +265,33 @@ function crearDatosLocal() {
             });
         },
 
-        /* texto de un archivo html (para el visualizador) */
+        /* texto de un archivo html (para el visualizador y el editor) */
         async htmlTexto(apk) {
             const a = await transaccion(["apks"], "readonly", t => t.apks.get(apk.id));
             if (!a || !a.archivo) throw new Error("Este archivo ya no está disponible");
             return a.archivo.text();
+        },
+
+        /* el editor: reemplaza el archivo html (solo quien lo publicó) */
+        async actualizarHtml(usuario, apk, texto) {
+            let error = null;
+
+            await transaccion(["apks"], "readwrite", t => {
+                const pedido = t.apks.get(apk.id);
+                pedido.onsuccess = () => {
+                    const a = pedido.result;
+
+                    if (!a || a.autorId !== usuario.id) {
+                        error = "Solo quien publicó puede editar este archivo";
+                        return;
+                    }
+
+                    a.archivo = new Blob([texto], { type: "text/html" });
+                    t.apks.put(a);
+                };
+            });
+
+            if (error) throw new Error(error);
         },
 
         /* ---------- descargas ---------- */
@@ -618,14 +640,29 @@ function crearDatosSupabase() {
             if (fila.video_path) await sb.storage.from("videos").remove([fila.video_path]);
         },
 
-        /* texto de un archivo html (para el visualizador) */
+        /* texto de un archivo html (para el visualizador y el editor).
+           El número al final evita ver una copia vieja guardada por el servidor. */
         async htmlTexto(apk) {
             const enlace = urlPublica("archivos", apk.archivoPath);
             if (!enlace) throw new Error("Este archivo ya no está disponible");
 
-            const respuesta = await fetch(enlace);
+            const respuesta = await fetch(enlace + "?v=" + Date.now(), { cache: "no-store" });
             if (!respuesta.ok) throw new Error("No se pudo cargar el archivo");
             return respuesta.text();
+        },
+
+        /* el editor: reemplaza el archivo html (el servidor solo lo permite en tu carpeta) */
+        async actualizarHtml(usuario, apk, texto) {
+            if (apk.autorId !== usuario.id) throw new Error("Solo quien publicó puede editar este archivo");
+
+            const cuerpo = new Blob([texto], { type: "text/html;charset=utf-8" });
+            const { error } = await sb.storage.from("archivos").upload(apk.archivoPath, cuerpo, {
+                upsert: true,
+                contentType: "text/html;charset=utf-8",
+                cacheControl: "0"
+            });
+
+            if (error) throw new Error(error.message);
         },
 
         /* ---------- descargas ---------- */
