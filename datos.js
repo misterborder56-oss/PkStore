@@ -289,6 +289,11 @@ function crearDatosLocal() {
             return listaDescargas(usuario).includes(apkId);
         },
 
+        /* ids de todas las apks que esta persona descargó */
+        async misDescargas(usuario) {
+            return listaDescargas(usuario);
+        },
+
         async contar(usuario, apk) {
             if (apk.tipo === "archivo") {
                 const lista = listaDescargas(usuario);
@@ -644,6 +649,12 @@ function crearDatosSupabase() {
             const fila = ok(await sb.from("descargas_usuario").select("apk_id")
                 .eq("apk_id", apkId).eq("usuario_id", usuario.id).maybeSingle());
             return Boolean(fila);
+        },
+
+        /* ids de todas las apks que esta persona descargó */
+        async misDescargas(usuario) {
+            const filas = ok(await sb.from("descargas_usuario").select("apk_id").eq("usuario_id", usuario.id));
+            return filas.map(f => f.apk_id);
         },
 
         /* el servidor decide: una descarga por persona en apks, cada visita en páginas y html */
