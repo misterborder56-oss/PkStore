@@ -115,23 +115,27 @@ panel lateral
             </div>
 
             <nav class="menu-nav">
-                <button type="button" class="menu-item" data-pantalla="DvInicio" onclick="InicioBtn()">
+                <button type="button" class="menu-item" data-red data-pantalla="DvInicio" onclick="InicioBtn()">
                     <span class="menu-icono">⌂</span>Inicio
                 </button>
 
-                <button type="button" id="ApkBtn" class="menu-item" data-pantalla="DvApk" data-filtro="archivo" onclick="ApkBtn()">
+                <button type="button" id="ApkBtn" class="menu-item" data-red data-pantalla="DvApk" data-filtro="archivo" onclick="ApkBtn()">
                     <span class="menu-icono">▦</span>Apps
                 </button>
 
-                <button type="button" class="menu-item" data-pantalla="DvApk" data-filtro="web" onclick="PaginasBtn()">
+                <button type="button" class="menu-item" data-red data-pantalla="DvApk" data-filtro="web" onclick="PaginasBtn()">
                     <span class="menu-icono">◍</span>Páginas
                 </button>
 
-                <button type="button" class="menu-item" data-pantalla="DvFile" onclick="AbrirDow()">
+                <button type="button" class="menu-item" data-red data-pantalla="DvFile" onclick="AbrirDow()">
                     <span class="menu-icono">＋</span>Publicar
                 </button>
 
-                <button type="button" class="menu-item" data-pantalla="DvCuenta" onclick="AbrirCuenta()">
+                <button type="button" class="menu-item" data-pantalla="DvDescargas" onclick="DescargasBtn()">
+                    <span class="menu-icono">⇩</span>Descargas
+                </button>
+
+                <button type="button" class="menu-item" data-red data-pantalla="DvCuenta" onclick="AbrirCuenta()">
                     <span class="menu-icono">☺</span>Mi cuenta
                 </button>
 
@@ -171,6 +175,10 @@ panel lateral
 
                 <button type="button" class="btn azul chico" onclick="AbrirDow()">Publicar</button>
             </header>
+
+            <div id="AvisoRed" class="aviso-red" hidden>
+                Sin conexión: solo puedes usar lo que guardaste en Descargas.
+            </div>
 
             <main class="contenido">
 
@@ -399,27 +407,40 @@ temas
                 </section>
 
 <!------------------------------------
-visualizador html
+descargas (funcionan sin internet)
 ------------------------------------>
-                <section class="pantalla" id="DvVisor">
+                <section class="pantalla" id="DvDescargas">
 
-                    <div class="visor-cab">
-                        <button type="button" class="btn chico" onclick="CerrarVisor()">← volver</button>
-                        <strong id="VisorTitulo" class="visor-titulo"></strong>
-                    </div>
+                    <h1 class="titulo-pantalla">Descargas</h1>
+                    <p class="nota">Las páginas HTML que guardaste en este dispositivo se abren aquí, también sin internet.</p>
 
-                    <iframe
-                        id="VisorMarco"
-                        class="visor-marco"
-                        title="visualizador html"
-                        sandbox="allow-scripts allow-forms allow-popups allow-modals"
-                        referrerpolicy="no-referrer"
-                    ></iframe>
+                    <div id="ListaDescargas" class="lista"></div>
 
                 </section>
 
             </main>
         </div>
+
+<!------------------------------------
+visualizador html en pantalla completa
+------------------------------------>
+        <section class="visor" id="DvVisor">
+
+            <div class="visor-barra">
+                <button type="button" class="btn chico" onclick="CerrarVisor()">← salir</button>
+                <strong id="VisorTitulo" class="visor-titulo"></strong>
+                <button type="button" class="icono-btn" aria-label="pantalla completa" onclick="AlternarPantallaCompleta()">⛶</button>
+            </div>
+
+            <iframe
+                id="VisorMarco"
+                class="visor-marco"
+                title="visualizador html"
+                sandbox="allow-scripts allow-forms allow-popups allow-modals"
+                referrerpolicy="no-referrer"
+            ></iframe>
+
+        </section>
 
         <div id="Lightbox" class="lightbox" hidden onclick="CerrarLightbox()">
             <img id="LightboxImg" alt="">
