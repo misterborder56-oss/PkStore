@@ -1,742 +1,2068 @@
 //////////////////////////////
-//CONFIGURACIÓN (Supabase)
+//ABRIR Y CERRAR REUTILIZABLES
 //////////////////////////////
 
-/* Pega aquí los datos de tu proyecto (Project Settings > API).
-   Si los dejas vacíos, la app guarda todo solo en este dispositivo. */
-const SUPABASE_URL = "https://uwqmmnlxapcxejtnnhzs.supabase.co";
-const SUPABASE_KEY = "sb_publishable_4kSjmVRyLvesfJo_gkLVtQ_Dy0dbG72";   /* clave "anon" o "publishable", nunca la service_role */
+/* ABRIR */
+function abrir(id) {
+    document.getElementById(id).style.display = "block";
+}
 
-const usarSupabase = Boolean(SUPABASE_URL && SUPABASE_KEY && window.supabase);
+/* CERRAR */
+function cerrar(id) {
+    document.getElementById(id).style.display = "none";
+}
 
-/* códigos de descarga: cuántos se generan y cuánto dura el período para desactivar el enlace */
-const TOTAL_CODIGOS = 50;
-const HORA = 60 * 60 * 1000;
+/* pantallas que viven dentro del panel lateral */
+const PANTALLAS_TIENDA = [
+    "DvInicio",
+    "DvApk",
+    "DvDetalle",
+    "DvFile",
+    "DvCuenta",
+    "DvActualizaciones",
+    "DvAjustes",
+    "DvDescargas",
+    "DvEditor",
+    "DvVisor"
+];
+
+/* CERRAR TODO */
+function ocultarPantallas() {
+    ["DvRegister", "DvLogin", "Shell"].concat(PANTALLAS_TIENDA).forEach(id => cerrar(id));
+}
+
+let pantallaActual = "DvInicio";
+let vistaAnterior = "DvInicio";
+let filtroTipo = "todo";
+
+/* IR A UNA PANTALLA (cierra las demás) */
+function ir(id) {
+    ocultarPantallas();
+
+    if (PANTALLAS_TIENDA.includes(id)) {
+        abrir("Shell");
+        abrir(id);
+        marcarMenu(id);
+
+        /* el detalle y el visor recuerdan desde dónde se abrieron */
+        if (id !== "DvDetalle" && id !== "DvVisor" && id !== "DvEditor") {
+            pantallaActual = id;
+            vistaAnterior = id;
+        }
+    } else {
+        abrir(id);
+    }
+
+    CerrarMenu();
+    window.scrollTo(0, 0);
+}
+
+/* resalta la opción del panel lateral */
+function marcarMenu(id) {
+    if (id === "DvDetalle" || id === "DvVisor" || id === "DvEditor") return;
+
+    document.querySelectorAll(".menu-item").forEach(item => {
+        let activo = item.dataset.pantalla === id &&
+            (!item.dataset.filtro || item.dataset.filtro === filtroTipo);
+        item.classList.toggle("activo", activo);
+    });
+}
+
+function AbrirMenu() {
+    document.getElementById("Menu").classList.add("abierto");
+    document.getElementById("Fondo").classList.add("abierto");
+}
+
+function CerrarMenu() {
+    document.getElementById("Menu").classList.remove("abierto");
+    document.getElementById("Fondo").classList.remove("abierto");
+}
+
+
+//////////////////////////////
+//Navegar entre div
+//////////////////////////////
+
+/* inicio */
+function InicioBtn() {
+    ir("DvInicio");
+    mostrarApks();
+}
+
+/* aplicaciones */
+function ApkBtn() {
+    filtroTipo = "archivo";
+    ir("DvApk");
+    mostrarApks();
+}
+
+/* páginas web y html */
+function PaginasBtn() {
+    filtroTipo = "web";
+    ir("DvApk");
+    mostrarApks();
+}
+
+/* chips de la lista: todo, apps o páginas */
+function Filtrar(filtro) {
+    filtroTipo = filtro;
+    ir("DvApk");
+    pintarApks();
+}
+
+/* escribir en el buscador abre los resultados */
+function BuscarInput() {
+    if (pantallaActual !== "DvApk") {
+        filtroTipo = "todo";
+        ir("DvApk");
+    }
+    pintarApks();
+}
+
+/* descargas guardadas en el dispositivo (funcionan sin internet) */
+function DescargasBtn() {
+    ir("DvDescargas");
+    mostrarDescargas();
+}
+
+/* ajuste */
+function OpcBtn() {
+    ir("DvAjustes");
+    mostrarCarpeta();
+}
+
+/* publicar */
+function AbrirDow() {
+    ir("DvFile");
+}
+
+/* volver desde el detalle */
+function CerrarDetalle() {
+    ir(vistaAnterior);
+    repintar(vistaAnterior);
+}
+
+/* login y registro */
+function AbrirLogin() {
+    ir("DvLogin");
+}
+
+function AbrirRegistro() {
+    ir("DvRegister");
+}
+
+/* cuenta */
+function AbrirCuenta() {
+    ir("DvCuenta");
+    mostrarCuenta();
+}
+
+/* actualizaciones */
+function AbrirActualizaciones() {
+    ir("DvActualizaciones");
+    mostrarActualizaciones();
+}
+
+/* vuelve a dibujar la pantalla a la que se regresa */
+function repintar(id) {
+    if (id === "DvInicio") pintarInicio();
+    else if (id === "DvApk") pintarApks();
+    else if (id === "DvCuenta") mostrarCuenta();
+    else if (id === "DvDescargas") mostrarDescargas();
+}
+
+
+//////////////////////////////
+//Temas
+//////////////////////////////
+
+/* aplica el tema: los colores los pone el css con la clase Bdc */
+function aplicarTema(tema) {
+    const claro = tema === "claro";
+
+    document.getElementById("body").classList.toggle("Bdc", claro);
+    document.getElementById("Cambiar").textContent = claro ? "☀" : "☪︎";
+}
+
+/* cambiar y guardar tema */
+function Estilo() {
+    const claro = !document.getElementById("body").classList.contains("Bdc");
+    const tema = claro ? "claro" : "oscuro";
+
+    aplicarTema(tema);
+    localStorage.setItem("temas", tema);
+}
 
 
 //////////////////////////////
 //Ayudas
 //////////////////////////////
 
-/* devuelve la url solo si es http o https (evita enlaces tipo javascript:) */
-function urlSegura(texto) {
+const MAX_ARCHIVO = 50 * 1024 * 1024;
+const MAX_VIDEO = 40 * 1024 * 1024;
+const MAX_HTML = 2 * 1024 * 1024;
+const MAX_IMAGEN = 3 * 1024 * 1024;
+const MAX_CAPTURAS = 8;
+
+let usuario = null;
+
+/* crea un elemento con clase y texto */
+function crear(etiqueta, clase, texto) {
+    let elemento = document.createElement(etiqueta);
+    elemento.className = clase;
+    if (texto) elemento.textContent = texto;
+    return elemento;
+}
+
+/* crea un botón con texto y acción */
+function crearBoton(texto, clase, accion) {
+    let boton = crear("button", clase, texto);
+    boton.type = "button";
+    boton.addEventListener("click", accion);
+    return boton;
+}
+
+/* texto sin mayúsculas ni acentos, para el buscador */
+function normalizar(texto) {
+    return texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
+function formatoFecha(fecha) {
+    return new Date(fecha).toLocaleDateString("es");
+}
+
+function formatoPromedio(apk) {
+    return apk.votos ? "★ " + apk.promedio.toFixed(1) : "★ sin votos";
+}
+
+/* las apks se descargan; las páginas y los html se visitan */
+function formatoContador(apk) {
+    let n = apk.descargas;
+
+    if (apk.tipo === "archivo") return n + (n === 1 ? " descarga" : " descargas");
+    return n + (n === 1 ? " visita" : " visitas");
+}
+
+function nombreTipo(apk) {
+    if (apk.tipo === "pagina") return "Página web";
+    if (apk.tipo === "html") return "Archivo HTML";
+    return "App";
+}
+
+function emojiTipo(apk) {
+    if (apk.tipo === "pagina") return "🌐";
+    if (apk.tipo === "html") return "📄";
+    return "📦";
+}
+
+/* círculo con la foto o la inicial del nombre */
+function ponerAvatar(elemento, nombre, foto) {
+    if (foto) {
+        let imagen = document.createElement("img");
+        imagen.src = foto;
+        imagen.alt = "Foto de " + nombre;
+        elemento.replaceChildren(imagen);
+    } else {
+        elemento.replaceChildren(document.createTextNode(nombre.charAt(0).toUpperCase()));
+    }
+}
+
+function crearAvatar(nombre, foto) {
+    let avatar = crear("span", "avatar chico");
+    ponerAvatar(avatar, nombre, foto);
+    return avatar;
+}
+
+/* icono de la aplicación, o el emoji de su tipo si no tiene */
+function crearIcono(apk, clase) {
+    if (apk.fotoUrl) {
+        let imagen = crear("img", clase);
+        imagen.src = apk.fotoUrl;
+        imagen.alt = "Icono de " + apk.nombre;
+        return imagen;
+    }
+    return crear("div", clase + " vacia", emojiTipo(apk));
+}
+
+/* copia al portapapeles (con plan B para navegadores sin permiso) */
+async function copiarTexto(texto) {
     try {
-        const enlace = new URL(texto);
-        return (enlace.protocol === "https:" || enlace.protocol === "http:") ? enlace.href : null;
+        await navigator.clipboard.writeText(texto);
+        return true;
+    } catch (error) {
+        let caja = document.createElement("textarea");
+        let copiado = false;
+
+        caja.value = texto;
+        caja.style.position = "fixed";
+        caja.style.opacity = "0";
+        document.body.append(caja);
+        caja.select();
+
+        try {
+            copiado = document.execCommand("copy");
+        } catch (error2) {
+            copiado = false;
+        }
+
+        caja.remove();
+        return copiado;
+    }
+}
+
+
+//////////////////////////////
+//Registro y login
+//////////////////////////////
+
+/* entra a la app con la cuenta ya validada */
+function iniciarSesion(perfil) {
+    usuario = perfil;
+    localStorage.setItem("ultimoUsuario", perfil.id);
+    actualizarMenuUsuario();
+    InicioBtn();
+}
+
+/* nombre y foto abajo del panel lateral */
+function actualizarMenuUsuario() {
+    if (!usuario) {
+        ponerAvatar(document.getElementById("MenuAvatar"), "?", null);
+        document.getElementById("MenuNombre").textContent = "sin conexión";
+        return;
+    }
+
+    ponerAvatar(document.getElementById("MenuAvatar"), usuario.nombre, usuario.foto);
+    document.getElementById("MenuNombre").textContent = usuario.nombre;
+}
+
+async function RegistrarBtn() {
+    let nombre = document.getElementById("InpName").value.trim();
+    let correo = document.getElementById("InpEmail").value.trim();
+    let Contrasena = document.getElementById("InpPassword").value;
+
+    if (!nombre || !correo || !Contrasena) {
+        alert("Completa todos los campos");
+        return;
+    }
+
+    if (nombre.length > 20) {
+        alert("El nombre es demasiado largo");
+        return;
+    }
+
+    if (nombre.length < 4) {
+        alert("El nombre es demasiado corto");
+        return;
+    }
+
+    if (Contrasena.length < 8) {
+        alert("La contraseña debe tener al menos 8 caracteres");
+        return;
+    }
+
+    try {
+        let perfil = await Datos.registrar(correo, nombre, Contrasena);
+
+        /* sin perfil: hay que confirmar el correo antes de entrar */
+        if (!perfil) {
+            alert("Cuenta creada. Revisa tu correo para confirmarla y luego entra.");
+            AbrirLogin();
+            return;
+        }
+
+        iniciarSesion(perfil);
+    } catch (error) {
+        alert(error.message);
+    }
+}
+
+
+async function LoginBtn() {
+    let correo = document.getElementById("Inpemail").value.trim();
+    let password = document.getElementById("Inppassword").value;
+
+    if (!correo || !password) {
+        alert("Completa todos los campos");
+        return;
+    }
+
+    try {
+        iniciarSesion(await Datos.entrar(correo, password));
+    } catch (error) {
+        alert(error.message);
+    }
+}
+
+
+async function SalirBtn() {
+    await Datos.salir();
+    usuario = null;
+    localStorage.removeItem("ultimoUsuario");
+    ir("DvLogin");
+}
+
+
+//////////////////////////////
+//Mi cuenta
+//////////////////////////////
+
+let fotoNueva = null;
+
+/* foto, nombre, números y publicaciones propias */
+async function mostrarCuenta() {
+    fotoNueva = null;
+
+    document.getElementById("InpCuentaNombre").value = usuario.nombre;
+    document.getElementById("CuentaCorreo").textContent = usuario.email;
+    ponerAvatar(document.getElementById("AvatarCuenta"), usuario.nombre, usuario.foto);
+
+    try {
+        apksCache = await Datos.listarApks();
+        let mias = apksCache.filter(a => a.autorId === usuario.id);
+
+        /* descargas (apks) y visitas (páginas y html) por separado */
+        let descargas = mias.filter(a => a.tipo === "archivo").reduce((total, a) => total + a.descargas, 0);
+        let visitas = mias.filter(a => a.tipo !== "archivo").reduce((total, a) => total + a.descargas, 0);
+        let votos = mias.reduce((total, a) => total + a.votos, 0);
+        let suma = mias.reduce((total, a) => total + a.promedio * a.votos, 0);
+
+        document.getElementById("DatoPublicadas").textContent = mias.length;
+        document.getElementById("DatoDescargas").textContent = descargas;
+        document.getElementById("DatoVisitas").textContent = visitas;
+        document.getElementById("DatoCalificacion").textContent =
+            votos ? (suma / votos).toFixed(1) + " / 10" : "—";
+
+        let lista = document.getElementById("MisApks");
+        lista.replaceChildren(...(mias.length
+            ? mias.map(crearTarjetaApp)
+            : [crear("p", "vacio", "Aún no publicaste nada.")]));
+    } catch (error) {
+        console.log("no se pudieron cargar los números", error);
+    }
+}
+
+/* vista previa de la foto elegida */
+document.getElementById("SubirFoto").addEventListener("change", function () {
+    let archivo = this.files[0];
+    if (!archivo) return;
+
+    if (archivo.size > MAX_IMAGEN) {
+        alert("La foto pesa más de 3 MB");
+        this.value = "";
+        return;
+    }
+
+    fotoNueva = archivo;
+    ponerAvatar(document.getElementById("AvatarCuenta"), usuario.nombre, URL.createObjectURL(archivo));
+});
+
+async function GuardarCuentaBtn() {
+    let nombre = document.getElementById("InpCuentaNombre").value.trim();
+    let boton = document.getElementById("BtnGuardarCuenta");
+
+    if (nombre.length < 4 || nombre.length > 20) {
+        alert("El nombre debe tener entre 4 y 20 caracteres");
+        return;
+    }
+
+    boton.disabled = true;
+
+    try {
+        usuario = await Datos.actualizarPerfil(usuario.id, { nombre: nombre, foto: fotoNueva });
+        fotoNueva = null;
+        actualizarMenuUsuario();
+        mostrarCuenta();
+    } catch (error) {
+        alert(error.message);
+    }
+
+    boton.disabled = false;
+}
+
+
+//////////////////////////////
+//Publicar
+//////////////////////////////
+
+let tipoPublicacion = "archivo";
+let accesoPublicacion = "libre";
+let urlsPrevias = [];
+
+let inpArchivo = document.getElementById("SubirFile");
+let inpImagen = document.getElementById("SubirImagen");
+let inpCapturas = document.getElementById("SubirCapturas");
+let inpVideo = document.getElementById("SubirVideo");
+
+/* apk, página web o html: cambia los campos que se ven */
+function ElegirTipo(tipo) {
+    tipoPublicacion = tipo;
+
+    document.getElementById("TipoArchivo").classList.toggle("activo", tipo === "archivo");
+    document.getElementById("TipoPagina").classList.toggle("activo", tipo === "pagina");
+    document.getElementById("TipoHtml").classList.toggle("activo", tipo === "html");
+
+    document.getElementById("InpApkUrl").hidden = tipo !== "pagina";
+    document.getElementById("LabelArchivo").hidden = tipo === "pagina";
+    document.getElementById("CampoAcceso").hidden = tipo !== "archivo";
+    document.getElementById("TituloArchivo").textContent = tipo === "html" ? "Archivo HTML" : "Archivo de la apk";
+
+    inpArchivo.accept = tipo === "html" ? ".html,.htm,text/html" : "";
+    inpArchivo.value = "";
+
+    actualizarSeleccion();
+}
+
+/* descarga libre o con código de un solo uso */
+function ElegirAcceso(acceso) {
+    accesoPublicacion = acceso;
+
+    document.getElementById("AccesoLibre").classList.toggle("activo", acceso === "libre");
+    document.getElementById("AccesoCodigo").classList.toggle("activo", acceso === "codigo");
+
+    document.getElementById("NotaAcceso").hidden = acceso !== "codigo";
+    document.getElementById("NotaAcceso").textContent =
+        "Se crean " + TOTAL_CODIGOS + " códigos que solo tú puedes ver y copiar. " +
+        "Cada código desbloquea la descarga para una persona.";
+}
+
+/* muestra lo que se eligió antes de publicar */
+function actualizarSeleccion() {
+    let archivo = inpArchivo.files[0];
+    let imagen = inpImagen.files[0];
+    let capturas = Array.from(inpCapturas.files);
+    let video = inpVideo.files[0];
+    let fila = document.getElementById("PrevCapturas");
+
+    urlsPrevias.forEach(url => URL.revokeObjectURL(url));
+    urlsPrevias = [];
+
+    document.getElementById("PrevArchivo").textContent = archivo ? archivo.name : "ningún archivo elegido";
+    document.getElementById("PrevIcono").textContent = imagen ? imagen.name : "ningún icono elegido";
+    document.getElementById("PrevVideo").textContent = video ? video.name : "un solo video (opcional)";
+    document.getElementById("PrevCapturasTexto").textContent =
+        capturas.length ? capturas.length + " de " + MAX_CAPTURAS + " imágenes" : "hasta " + MAX_CAPTURAS + " imágenes";
+
+    fila.replaceChildren(...capturas.map(captura => {
+        let url = URL.createObjectURL(captura);
+        let miniatura = crear("img", "prev-mini");
+
+        urlsPrevias.push(url);
+        miniatura.src = url;
+        miniatura.alt = captura.name;
+        return miniatura;
+    }));
+}
+
+[inpArchivo, inpImagen, inpVideo].forEach(input => input.addEventListener("change", actualizarSeleccion));
+
+inpCapturas.addEventListener("change", function () {
+    if (inpCapturas.files.length > MAX_CAPTURAS) {
+        alert("Puedes subir hasta " + MAX_CAPTURAS + " capturas");
+        inpCapturas.value = "";
+    }
+    actualizarSeleccion();
+});
+
+async function PublicarBtn() {
+    let archivo = inpArchivo.files[0];
+    let imagen = inpImagen.files[0];
+    let capturas = Array.from(inpCapturas.files);
+    let video = inpVideo.files[0];
+    let nombre = document.getElementById("InpApkNombre").value.trim();
+    let descripcion = document.getElementById("InpApkDescripcion").value.trim();
+    let enlace = null;
+    let boton = document.getElementById("BtnPublicar");
+
+    if (tipoPublicacion === "pagina") {
+        enlace = urlSegura(document.getElementById("InpApkUrl").value.trim());
+        if (!enlace) {
+            alert("Escribe un enlace que empiece por https://");
+            return;
+        }
+        if (!nombre) {
+            alert("Escribe un nombre para la página");
+            return;
+        }
+        archivo = null;
+    } else {
+        if (!archivo) {
+            alert("Elige un archivo para publicar");
+            return;
+        }
+
+        if (tipoPublicacion === "html") {
+            if (!/\.html?$/i.test(archivo.name)) {
+                alert("El archivo debe terminar en .html");
+                return;
+            }
+            if (archivo.size > MAX_HTML) {
+                alert("El archivo html pesa más de 2 MB");
+                return;
+            }
+        } else if (archivo.size > MAX_ARCHIVO) {
+            alert("El archivo pesa más de 50 MB");
+            return;
+        }
+
+        if (!nombre) nombre = archivo.name;
+    }
+
+    if (imagen && imagen.size > MAX_IMAGEN) {
+        alert("El icono pesa más de 3 MB");
+        return;
+    }
+
+    if (capturas.some(captura => captura.size > MAX_IMAGEN)) {
+        alert("Cada captura debe pesar menos de 3 MB");
+        return;
+    }
+
+    if (video && video.size > MAX_VIDEO) {
+        alert("El video pesa más de 40 MB");
+        return;
+    }
+
+    boton.disabled = true;
+
+    try {
+        await Datos.publicar(usuario, {
+            nombre: nombre,
+            descripcion: descripcion,
+            tipo: tipoPublicacion,
+            acceso: accesoPublicacion,
+            url: enlace,
+            archivo: archivo,
+            imagen: imagen || null,
+            capturas: capturas,
+            video: video || null
+        });
+    } catch (error) {
+        alert("No se pudo publicar: " + error.message);
+        boton.disabled = false;
+        return;
+    }
+
+    boton.disabled = false;
+
+    /* limpiar formulario */
+    ["InpApkNombre", "InpApkDescripcion", "InpApkUrl"].forEach(id => { document.getElementById(id).value = ""; });
+    [inpArchivo, inpImagen, inpCapturas, inpVideo].forEach(input => { input.value = ""; });
+    ElegirAcceso("libre");
+    ElegirTipo("archivo");
+
+    /* abre lo que acabas de publicar (si tiene códigos, ahí los ves) */
+    vistaAnterior = "DvInicio";
+    await mostrarApks();
+    let nueva = apksCache.find(a => a.autorId === usuario.id);
+
+    if (nueva) abrirDetalle(nueva.id);
+    else InicioBtn();
+}
+
+
+//////////////////////////////
+//Inicio y lista de aplicaciones
+//////////////////////////////
+
+let apksCache = [];
+
+/* tarjeta: icono, nombre, autor, calificación y contador */
+function crearTarjetaApp(apk) {
+    let tarjeta = crear("article", "tarjeta-app");
+    let meta = crear("div", "tarjeta-meta");
+
+    tarjeta.tabIndex = 0;
+    tarjeta.setAttribute("role", "button");
+
+    meta.append(
+        crear("span", "apk-estrella", formatoPromedio(apk)),
+        crear("span", "", formatoContador(apk))
+    );
+
+    tarjeta.append(
+        crearIcono(apk, "tarjeta-icono"),
+        crear("strong", "tarjeta-nombre", apk.nombre),
+        crear("span", "tarjeta-autor", apk.autor),
+        meta
+    );
+
+    if (apk.tipo === "html") tarjeta.append(crear("span", "insignia", "HTML"));
+    else if (apk.tipo === "pagina") tarjeta.append(crear("span", "insignia", "página web"));
+    else if (apk.acceso === "codigo") tarjeta.append(crear("span", "insignia", "🔒 con código"));
+
+    tarjeta.addEventListener("click", () => abrirDetalle(apk.id));
+    tarjeta.addEventListener("keydown", evento => {
+        if (evento.key === "Enter") abrirDetalle(apk.id);
+    });
+
+    return tarjeta;
+}
+
+/* una fila de tarjetas que se mueve hacia los lados */
+function crearFila(titulo, lista) {
+    let bloque = crear("section", "bloque");
+    let cabecera = crear("div", "bloque-cab");
+    let fila = crear("div", "fila");
+
+    cabecera.append(
+        crear("h2", "bloque-titulo", titulo),
+        crearBoton("ver todo", "enlace", () => Filtrar("todo"))
+    );
+    fila.append(...lista.slice(0, 12).map(crearTarjetaApp));
+    bloque.append(cabecera, fila);
+
+    return bloque;
+}
+
+/* pantalla de inicio: filas como en una tienda */
+function pintarInicio() {
+    let contenedor = document.getElementById("InicioFilas");
+
+    if (!apksCache.length) {
+        contenedor.replaceChildren(crear("p", "vacio",
+            "Aún no hay nada publicado. Toca Publicar para subir lo primero."));
+        return;
+    }
+
+    let masVisitas = (a, b) => b.descargas - a.descargas;
+
+    let secciones = [
+        ["Mejor calificadas", apksCache.filter(a => a.votos).sort((a, b) => b.promedio - a.promedio || b.votos - a.votos)],
+        ["Apps más descargadas", apksCache.filter(a => a.tipo === "archivo" && a.descargas).sort(masVisitas)],
+        ["Páginas más visitadas", apksCache.filter(a => a.tipo !== "archivo" && a.descargas).sort(masVisitas)],
+        ["Nuevas", apksCache.slice()]
+    ];
+
+    contenedor.replaceChildren(...secciones
+        .filter(([, lista]) => lista.length)
+        .map(([titulo, lista]) => crearFila(titulo, lista)));
+}
+
+/* dibuja la lista aplicando el filtro y el buscador */
+function pintarApks() {
+    let lista = document.getElementById("ListaApks");
+    let texto = normalizar(document.getElementById("BuscarApk").value.trim());
+
+    let titulos = { todo: "Todo", archivo: "Apps", web: "Páginas y HTML" };
+    document.getElementById("TituloLista").textContent = texto ? "Resultados" : titulos[filtroTipo];
+
+    document.getElementById("FiltroTodo").classList.toggle("activo", filtroTipo === "todo");
+    document.getElementById("FiltroArchivo").classList.toggle("activo", filtroTipo === "archivo");
+    document.getElementById("FiltroWeb").classList.toggle("activo", filtroTipo === "web");
+
+    let filtradas = apksCache.filter(apk => {
+        let delTipo = filtroTipo === "todo" ||
+            (filtroTipo === "archivo" && apk.tipo === "archivo") ||
+            (filtroTipo === "web" && apk.tipo !== "archivo");
+
+        return delTipo && normalizar(apk.nombre + " " + apk.descripcion + " " + apk.autor).includes(texto);
+    });
+
+    if (!filtradas.length) {
+        lista.replaceChildren(crear("p", "vacio", apksCache.length
+            ? "No hay resultados."
+            : "Aún no hay aplicaciones. Toca Publicar para subir la primera."));
+        return;
+    }
+
+    lista.replaceChildren(...filtradas.map(crearTarjetaApp));
+}
+
+/* lee todo de nuevo y dibuja inicio y lista */
+async function mostrarApks() {
+    try {
+        apksCache = await Datos.listarApks();
+    } catch (error) {
+        console.log("no se pudo leer la lista", error);
+        apksCache = [];
+    }
+
+    pintarInicio();
+    pintarApks();
+}
+
+
+//////////////////////////////
+//Detalle: descripción, capturas, calificación y comentarios
+//////////////////////////////
+
+/* abre el detalle de una aplicación */
+async function abrirDetalle(id) {
+    ir("DvDetalle");
+    document.getElementById("ContenidoDetalle").replaceChildren(crear("p", "nota", "cargando..."));
+    await refrescarDetalle(id);
+}
+
+/* vuelve a leer los datos y dibuja el detalle */
+async function refrescarDetalle(id) {
+    try {
+        apksCache = await Datos.listarApks();
+
+        let apk = apksCache.find(a => a.id === id);
+        if (!apk) {
+            CerrarDetalle();
+            return;
+        }
+
+        let propia = apk.autorId === usuario.id;
+        let conCodigo = apk.tipo === "archivo" && apk.acceso === "codigo";
+
+        let [miVoto, comentarios, descargada, desbloqueo, codigos, guardada] = await Promise.all([
+            Datos.miVoto(usuario, id),
+            Datos.comentarios(id),
+            Datos.yaDescargue(usuario, id),
+            conCodigo && !propia ? Datos.estadoDesbloqueo(usuario, id) : null,
+            conCodigo && propia ? Datos.codigos(id) : null,
+            apk.tipo === "html" ? leerOfflineUno(claveOffline(apk)) : null
+        ]);
+
+        pintarDetalle(apk, { miVoto, comentarios, descargada, desbloqueo, codigos, guardada: Boolean(guardada) });
+    } catch (error) {
+        alert(error.message);
+        CerrarDetalle();
+    }
+}
+
+function pintarDetalle(apk, datos) {
+    let contenido = document.getElementById("ContenidoDetalle");
+    let propia = apk.autorId === usuario.id;
+
+    let grid = crear("div", "det-grid");
+    let principal = crear("div", "det-principal");
+    let lado = crear("aside", "panel-lado");
+
+    /* icono, nombre y autor */
+    let cabecera = crear("div", "det-cabecera");
+    let info = crear("div", "");
+    let autor = crear("div", "det-autor");
+    let insignias = crear("div", "det-badges");
+
+    autor.append(crearAvatar(apk.autor, apk.autorFoto), crear("span", "", apk.autor));
+    insignias.append(crear("span", "insignia", nombreTipo(apk)));
+    if (apk.tipo === "archivo" && apk.acceso === "codigo") insignias.append(crear("span", "insignia", "🔒 descarga con código"));
+
+    info.append(crear("h1", "det-titulo", apk.nombre), autor, insignias);
+    cabecera.append(crearIcono(apk, "det-icono"), info);
+    principal.append(cabecera);
+
+    /* números */
+    let stats = crear("div", "det-stats");
+    [
+        [apk.votos ? apk.promedio.toFixed(1) + " ★" : "—", apk.votos + (apk.votos === 1 ? " voto" : " votos")],
+        [String(apk.descargas), apk.tipo === "archivo" ? "descargas" : "visitas"],
+        [nombreTipo(apk), "tipo"]
+    ].forEach(([valor, nombre]) => {
+        let stat = crear("div", "det-stat");
+        stat.append(crear("strong", "", valor), crear("span", "", nombre));
+        stats.append(stat);
+    });
+    principal.append(stats);
+
+    /* descargar, desbloquear o abrir */
+    principal.append(crearAcciones(apk, datos));
+
+    /* video y capturas */
+    if (apk.videoUrl || apk.capturas.length) {
+        let carrusel = crear("div", "carrusel");
+
+        if (apk.videoUrl) {
+            let video = crear("video", "car-video");
+            video.src = apk.videoUrl;
+            video.controls = true;
+            video.preload = "metadata";
+            video.setAttribute("playsinline", "");
+            carrusel.append(video);
+        }
+
+        apk.capturas.forEach((url, i) => {
+            let captura = crear("img", "car-img");
+            captura.src = url;
+            captura.alt = "Captura " + (i + 1) + " de " + apk.nombre;
+            captura.loading = "lazy";
+            captura.addEventListener("click", () => AbrirLightbox(url));
+            carrusel.append(captura);
+        });
+
+        principal.append(crear("h2", "seccion", "Vista previa"), carrusel);
+    }
+
+    /* descripción */
+    if (apk.descripcion) {
+        principal.append(crear("h2", "seccion", "Acerca de"), crear("p", "det-texto", apk.descripcion));
+    }
+
+    /* calificar del 1 al 10 */
+    let calif = crear("div", "calif");
+    calif.append(crear("div", "calif-numero", apk.votos ? apk.promedio.toFixed(1) : "—"));
+
+    if (propia) {
+        calif.append(crear("p", "nota", "No puedes calificar tu propia publicación."));
+    } else {
+        let puntos = crear("div", "puntos");
+
+        for (let i = 1; i <= 10; i++) {
+            let punto = crear("button", "chip punto" + (i === datos.miVoto ? " activo" : ""), String(i));
+            punto.type = "button";
+            punto.setAttribute("aria-label", "calificar con " + i);
+            punto.addEventListener("click", () => CalificarBtn(apk.id, i));
+            puntos.append(punto);
+        }
+        calif.append(puntos);
+    }
+    principal.append(crear("h2", "seccion", "Calificación"), calif);
+
+    /* códigos de descarga: solo para quien publicó */
+    if (propia && datos.codigos) principal.append(crear("h2", "seccion", "Códigos de descarga"), crearPanelCodigos(datos.codigos, apk.id));
+
+    /* comentarios */
+    principal.append(crear("h2", "seccion", "Comentarios (" + datos.comentarios.length + ")"));
+
+    if (!datos.comentarios.length) principal.append(crear("p", "nota", "Sé el primero en comentar."));
+    datos.comentarios.forEach(c => principal.append(crearComentario(apk.id, c)));
+
+    let formulario = crear("div", "form-comentario");
+    let caja = crear("input", "input");
+
+    caja.id = "InpComentario";
+    caja.type = "text";
+    caja.maxLength = 300;
+    caja.placeholder = "escribe un comentario";
+    caja.setAttribute("aria-label", "escribe un comentario");
+    caja.addEventListener("keydown", evento => {
+        if (evento.key === "Enter") ComentarBtn(apk.id);
+    });
+
+    formulario.append(caja, crearBoton("comentar", "btn azul", () => ComentarBtn(apk.id)));
+    principal.append(formulario);
+
+    /* eliminar (solo quien la publicó) */
+    if (propia) {
+        principal.append(crearBoton("Eliminar publicación", "btn peligro ancho", () => EliminarBtn(apk.id)));
+    }
+
+    /* panel derecho: información y más del autor */
+    let informacion = crear("div", "panel");
+    informacion.append(crear("h3", "", "Información"));
+    [
+        ["Publicado por", apk.autor],
+        ["Fecha", formatoFecha(apk.fecha)],
+        ["Tipo", nombreTipo(apk)],
+        [apk.tipo === "archivo" ? "Descargas" : "Visitas", String(apk.descargas)],
+        ["Calificación", apk.votos ? apk.promedio.toFixed(1) + " / 10" : "sin votos"]
+    ].forEach(([nombre, valor]) => {
+        let fila = crear("div", "info-fila");
+        fila.append(crear("span", "", nombre), crear("strong", "", valor));
+        informacion.append(fila);
+    });
+    if (apk.tipo === "archivo") {
+        let fila = crear("div", "info-fila");
+        fila.append(crear("span", "", "Descarga"), crear("strong", "", apk.acceso === "codigo" ? "con código" : "libre"));
+        informacion.append(fila);
+    }
+    lado.append(informacion);
+
+    let masDelAutor = apksCache.filter(a => a.autorId === apk.autorId && a.id !== apk.id).slice(0, 5);
+    if (masDelAutor.length) {
+        let mas = crear("div", "panel");
+        mas.append(crear("h3", "", "Más de " + apk.autor), ...masDelAutor.map(crearMiniFila));
+        lado.append(mas);
+    }
+
+    grid.append(principal, lado);
+    contenido.replaceChildren(grid);
+}
+
+/* fila pequeña: icono, nombre y calificación */
+function crearMiniFila(apk) {
+    let fila = crear("div", "mini-fila");
+    let texto = crear("div", "mini-texto");
+
+    fila.tabIndex = 0;
+    fila.setAttribute("role", "button");
+
+    texto.append(crear("span", "", apk.nombre), crear("small", "", formatoPromedio(apk)));
+    fila.append(crearIcono(apk, "mini-icono"), texto);
+
+    fila.addEventListener("click", () => abrirDetalle(apk.id));
+    fila.addEventListener("keydown", evento => {
+        if (evento.key === "Enter") abrirDetalle(apk.id);
+    });
+    return fila;
+}
+
+/* el botón principal cambia según el tipo y el estado de la descarga */
+function crearAcciones(apk, datos) {
+    let caja = crear("div", "acciones");
+
+    if (apk.tipo === "pagina") {
+        caja.append(crearBoton("Abrir página", "btn azul ancho", () => AbrirPagina(apk)));
+
+        if (urlSegura(apk.url)) caja.append(crear("p", "nota", "abre " + new URL(apk.url).hostname));
+        return caja;
+    }
+
+    if (apk.tipo === "html") {
+        caja.append(crearBoton("Abrir en pantalla completa", "btn azul ancho", () => AbrirVisor(apk)));
+
+        /* el editor solo lo ve quien publicó el archivo */
+        if (apk.autorId === usuario.id) {
+            caja.append(
+                crear("p", "nota", "Solo tú puedes editar este archivo."),
+                crearBoton("Editar archivo", "btn chico", () => AbrirEditor(apk))
+            );
+        }
+
+        if (datos.guardada) {
+            caja.append(
+                crear("p", "nota", "Guardada en este dispositivo: se abre también sin internet."),
+                crearBoton("Quitar del dispositivo", "btn peligro chico", () => QuitarOfflineBtn(apk))
+            );
+        } else {
+            caja.append(
+                crear("p", "nota", "Descárgala para abrirla sin internet."),
+                crearBoton("Descargar para usar sin internet", "btn chico", () => GuardarOfflineBtn(apk))
+            );
+        }
+        return caja;
+    }
+
+    /* ya la descargó: solo puede abrirla */
+    if (datos.descargada) {
+        caja.append(
+            crearBoton("Abrir", "btn azul ancho", () => abrirArchivoBtn(apk)),
+            crear("p", "nota", "Ya la descargaste. Toca Abrir para abrirla.")
+        );
+        return caja;
+    }
+
+    /* con código y todavía bloqueada */
+    if (datos.desbloqueo && !datos.desbloqueo.desbloqueada) {
+        let candado = crear("div", "candado");
+        let fila = crear("div", "form-comentario");
+        let campo = crear("input", "input");
+
+        campo.id = "InpCodigo";
+        campo.type = "text";
+        campo.maxLength = 20;
+        campo.placeholder = "XXXX-XXXX-XXXX";
+        campo.autocomplete = "off";
+        campo.setAttribute("aria-label", "código de descarga");
+        campo.addEventListener("keydown", evento => {
+            if (evento.key === "Enter") DesbloquearBtn(apk.id);
+        });
+
+        fila.append(campo, crearBoton("Desbloquear", "btn azul", () => DesbloquearBtn(apk.id)));
+        candado.append(
+            crear("strong", "", "🔒 Descarga con código"),
+            crear("p", "nota", "Pídele un código de un solo uso a quien la publicó."),
+            fila
+        );
+        caja.append(candado);
+        return caja;
+    }
+
+    caja.append(crearBoton("Descargar", "btn azul ancho", () => DescargarBtn(apk)));
+
+    /* desbloqueada con código: durante la primera hora se puede desactivar */
+    if (datos.desbloqueo && datos.desbloqueo.desbloqueada) {
+        let minutos = 60 - Math.floor((Date.now() - datos.desbloqueo.canjeadoEn) / 60000);
+
+        if (minutos > 0) {
+            caja.append(
+                crear("p", "nota", "Enlace activo. Durante " + minutos + " min más puedes desactivarlo y el código se restablece."),
+                crearBoton("Desactivar enlace", "btn peligro chico", () => DesactivarBtn(apk.id))
+            );
+        } else {
+            caja.append(crear("p", "nota", "Enlace activo."));
+        }
+    }
+
+    return caja;
+}
+
+function crearComentario(apkId, comentario) {
+    let fila = crear("div", "comentario");
+    let cuerpo = crear("div", "comentario-cuerpo");
+    let autor = crear("div", "comentario-autor", comentario.autor);
+
+    autor.append(crear("span", "comentario-fecha", formatoFecha(comentario.fecha)));
+    cuerpo.append(autor, crear("p", "comentario-texto", comentario.texto));
+    fila.append(crearAvatar(comentario.autor, comentario.foto), cuerpo);
+
+    /* cada quien puede borrar sus comentarios */
+    if (comentario.autorId === usuario.id) {
+        let borrar = crear("button", "apk-borrar", "✕");
+        borrar.type = "button";
+        borrar.setAttribute("aria-label", "borrar comentario");
+        borrar.addEventListener("click", async () => {
+            if (!confirm("¿Borrar este comentario?")) return;
+            try {
+                await Datos.borrarComentario(comentario.id);
+                await refrescarDetalle(apkId);
+            } catch (error) {
+                alert(error.message);
+            }
+        });
+        fila.append(borrar);
+    }
+
+    return fila;
+}
+
+/* abrir una página: cuenta una visita */
+async function AbrirPagina(apk) {
+    let enlace = urlSegura(apk.url);
+
+    if (!enlace) {
+        alert("El enlace no es válido");
+        return;
+    }
+
+    window.open(enlace, "_blank", "noopener");
+
+    try {
+        await Datos.contar(usuario, apk);
+        await refrescarDetalle(apk.id);
+    } catch (error) {
+        alert(error.message);
+    }
+}
+
+/* descargar una apk: cuenta una sola vez por persona */
+async function DescargarBtn(apk) {
+    try {
+        /* si elegiste una carpeta, el permiso se pide ya (con el toque del botón) */
+        let carpeta = await carpetaConPermiso();
+        let enlace = await Datos.archivoUrl(usuario, apk, true);
+        let enCarpeta = false;
+
+        if (carpeta) {
+            try {
+                await escribirEnCarpeta(carpeta, enlace, apk.nombreArchivo || apk.nombre);
+                enCarpeta = true;
+            } catch (error) {
+                console.log("no se pudo usar la carpeta, se descarga normal", error);
+            }
+        }
+
+        if (!enCarpeta) {
+            let a = document.createElement("a");
+
+            a.href = enlace;
+            a.download = apk.nombreArchivo;
+            document.body.append(a);
+            a.click();
+            a.remove();
+        }
+
+        await Datos.contar(usuario, apk);
+        await guardarRegistroApk(apk, Date.now());
+
+        if (enCarpeta) alert("Guardada en la carpeta «" + carpeta.name + "»");
+        await refrescarDetalle(apk.id);
+    } catch (error) {
+        alert(error.message);
+        refrescarDetalle(apk.id);
+    }
+}
+
+async function abrirArchivoBtn(apk) {
+    try {
+        await abrirArchivo(apk);
+    } catch (error) {
+        alert(error.message);
+    }
+}
+
+/* abre el archivo ya descargado en una pestaña nueva (no cuenta otra descarga) */
+async function abrirArchivo(apk) {
+    /* se abre la pestaña ya, para que el navegador no la bloquee */
+    let ventana = window.open("", "_blank");
+
+    try {
+        let enlace = await Datos.archivoUrl(usuario, apk, false);
+
+        if (ventana) ventana.location.href = enlace;
+        else window.location.href = enlace;
+    } catch (error) {
+        if (ventana) ventana.close();
+        throw error;
+    }
+}
+
+async function CalificarBtn(apkId, puntos) {
+    try {
+        await Datos.calificar(usuario, apkId, puntos);
+        await refrescarDetalle(apkId);
+    } catch (error) {
+        alert(error.message);
+    }
+}
+
+async function ComentarBtn(apkId) {
+    let texto = document.getElementById("InpComentario").value.trim();
+    if (!texto) return;
+
+    try {
+        await Datos.comentar(usuario, apkId, texto);
+        await refrescarDetalle(apkId);
+    } catch (error) {
+        alert(error.message);
+    }
+}
+
+async function EliminarBtn(apkId) {
+    if (!confirm("¿Eliminar esta publicación? No se puede deshacer.")) return;
+
+    try {
+        await Datos.eliminar(apkId);
+        await mostrarApks();
+        CerrarDetalle();
+    } catch (error) {
+        alert(error.message);
+    }
+}
+
+
+//////////////////////////////
+//Códigos de descarga
+//////////////////////////////
+
+/* quien descarga: usa un código para desbloquear el enlace */
+async function DesbloquearBtn(apkId) {
+    let codigo = document.getElementById("InpCodigo").value.trim();
+
+    if (!codigo) {
+        alert("Escribe el código");
+        return;
+    }
+
+    try {
+        await Datos.canjear(usuario, apkId, codigo);
+        await refrescarDetalle(apkId);
+    } catch (error) {
+        alert(error.message);
+    }
+}
+
+/* durante la primera hora: el código vuelve a estar disponible */
+async function DesactivarBtn(apkId) {
+    if (!confirm("¿Desactivar el enlace? El código se restablece y tendrás que usar uno nuevo para descargar.")) return;
+
+    try {
+        await Datos.desactivarEnlace(usuario, apkId);
+        await refrescarDetalle(apkId);
+    } catch (error) {
+        alert(error.message);
+        refrescarDetalle(apkId);
+    }
+}
+
+/* quien publicó: ve y copia sus códigos */
+function crearPanelCodigos(codigos, apkId) {
+    let panel = crear("div", "codigos");
+    let cabecera = crear("div", "codigos-cab");
+    let rejilla = crear("div", "codigos-grid");
+    let libres = codigos.filter(c => !c.usado);
+
+    /* si por algún error no se crearon, se pueden generar desde aquí */
+    if (!codigos.length) {
+        panel.append(
+            crear("p", "nota", "Aún no se generaron los códigos de esta publicación."),
+            crearBoton("Generar " + TOTAL_CODIGOS + " códigos", "btn azul chico", async () => {
+                try {
+                    await Datos.generarCodigos(apkId);
+                    await refrescarDetalle(apkId);
+                } catch (error) {
+                    alert(error.message);
+                }
+            })
+        );
+        return panel;
+    }
+
+    cabecera.append(
+        crear("span", "nota", "Solo tú los ves. " + libres.length + " de " + codigos.length + " disponibles."),
+        crearBoton("copiar disponibles", "chip", async function () {
+            let copiado = await copiarTexto(libres.map(c => c.codigo).join("\n"));
+            this.textContent = copiado ? "¡copiados!" : "no se pudo copiar";
+            setTimeout(() => { this.textContent = "copiar disponibles"; }, 1800);
+        })
+    );
+
+    codigos.forEach(c => {
+        let fila = crear("div", "codigo-fila" + (c.usado ? " usado" : ""));
+
+        fila.append(
+            crear("code", "", c.codigo),
+            c.usado
+                ? crear("span", "nota", "usado")
+                : crearBoton("copiar", "chip", async function () {
+                    let copiado = await copiarTexto(c.codigo);
+                    this.textContent = copiado ? "¡copiado!" : "error";
+                    setTimeout(() => { this.textContent = "copiar"; }, 1500);
+                })
+        );
+        rejilla.append(fila);
+    });
+
+    panel.append(cabecera, rejilla);
+    return panel;
+}
+
+
+//////////////////////////////
+//Capturas en grande
+//////////////////////////////
+function AbrirLightbox(url) {
+    document.getElementById("LightboxImg").src = url;
+    document.getElementById("Lightbox").hidden = false;
+}
+
+function CerrarLightbox() {
+    document.getElementById("Lightbox").hidden = true;
+}
+
+document.addEventListener("keydown", evento => {
+    if (evento.key === "Escape") CerrarLightbox();
+});
+
+
+//////////////////////////////
+//Guardar para usar sin internet
+//////////////////////////////
+
+/* base aparte, solo en este dispositivo: guarda el texto de cada html descargado */
+function abrirOffline() {
+    return new Promise((resolve, reject) => {
+        const pedido = indexedDB.open("pkview-offline", 2);
+
+        pedido.onupgradeneeded = () => {
+            const db = pedido.result;
+            if (!db.objectStoreNames.contains("paginas")) db.createObjectStore("paginas", { keyPath: "clave" });
+            if (!db.objectStoreNames.contains("ajustes")) db.createObjectStore("ajustes", { keyPath: "clave" });
+        };
+        pedido.onsuccess = () => resolve(pedido.result);
+        pedido.onerror = () => reject(pedido.error);
+    });
+}
+
+async function operacionOffline(modo, accion, tienda = "paginas") {
+    const db = await abrirOffline();
+
+    return new Promise((resolve, reject) => {
+        const tx = db.transaction(tienda, modo);
+        const pedido = accion(tx.objectStore(tienda));
+
+        tx.oncomplete = () => { db.close(); resolve(pedido ? pedido.result : undefined); };
+        tx.onerror = tx.onabort = () => { db.close(); reject(tx.error); };
+    });
+}
+
+const guardarOffline = item => operacionOffline("readwrite", tienda => tienda.put(item));
+const leerOffline = () => operacionOffline("readonly", tienda => tienda.getAll());
+const leerOfflineUno = clave => operacionOffline("readonly", tienda => tienda.get(clave));
+const borrarOffline = clave => operacionOffline("readwrite", tienda => tienda.delete(clave));
+
+function claveOffline(apk) {
+    return Datos.modo + ":" + apk.id;
+}
+
+/* descarga el html y lo deja en el dispositivo */
+async function GuardarOfflineBtn(apk) {
+    try {
+        let html = await Datos.htmlTexto(apk);
+
+        await guardarOffline({
+            clave: claveOffline(apk),
+            nombre: apk.nombre,
+            autor: apk.autor,
+            html: html,
+            guardadoEn: Date.now()
+        });
+
+        /* pide al navegador no borrar lo guardado cuando falte espacio */
+        if (navigator.storage && navigator.storage.persist) navigator.storage.persist();
+
+        await refrescarDetalle(apk.id);
+    } catch (error) {
+        alert("No se pudo descargar: " + error.message);
+    }
+}
+
+async function QuitarOfflineBtn(apk) {
+    if (!confirm("¿Quitar esta página del dispositivo? Ya no se abrirá sin internet.")) return;
+
+    await borrarOffline(claveOffline(apk));
+    await refrescarDetalle(apk.id);
+}
+
+/* las apks no se guardan aquí (el archivo queda en las descargas del teléfono): solo se anota que las descargaste */
+async function guardarRegistroApk(apk, fecha) {
+    await guardarOffline({
+        clave: claveOffline(apk),
+        tipo: "archivo",
+        apkId: apk.id,
+        nombre: apk.nombre,
+        autor: apk.autor,
+        usuarioId: usuario.id,
+        guardadoEn: fecha
+    });
+}
+
+/* con internet: agrega a la lista las apks que descargaste antes de esta función */
+async function sincronizarApksDescargadas() {
+    try {
+        let [ids, apks, guardados] = await Promise.all([
+            Datos.misDescargas(usuario),
+            Datos.listarApks(),
+            leerOffline()
+        ]);
+
+        apksCache = apks;
+
+        for (let id of ids) {
+            let apk = apks.find(a => a.id === id && a.tipo === "archivo");
+
+            if (apk && !guardados.some(g => g.clave === claveOffline(apk))) {
+                await guardarRegistroApk(apk, null);
+            }
+        }
+    } catch (error) {
+        console.log("no se pudieron revisar las descargas", error);
+    }
+}
+
+/* fila de una página html guardada: se abre sin internet */
+function crearFilaGuardada(item) {
+    let fila = crear("div", "guardado");
+    let texto = crear("div", "guardado-texto");
+    let botones = crear("div", "guardado-botones");
+
+    texto.append(
+        crear("strong", "", item.nombre),
+        crear("small", "", "de " + item.autor + ", guardada el " + formatoFecha(item.guardadoEn))
+    );
+
+    botones.append(
+        crearBoton("Abrir", "btn azul chico", () => AbrirVisorGuardado(item)),
+        crearBoton("Quitar", "btn peligro chico", async () => {
+            if (!confirm("¿Quitar esta página del dispositivo?")) return;
+            await borrarOffline(item.clave);
+            mostrarDescargas();
+        })
+    );
+
+    fila.append(crear("div", "guardado-icono", "📄"), texto, botones);
+    return fila;
+}
+
+/* fila de una apk descargada: necesita internet para abrirse */
+function crearFilaApk(item) {
+    let fila = crear("div", "guardado");
+    let texto = crear("div", "guardado-texto");
+    let botones = crear("div", "guardado-botones");
+    let sinRed = !navigator.onLine;
+    let abrirBtn = crearBoton(sinRed ? "Sin internet" : "Abrir", "btn azul chico", () => abrirApkGuardada(item));
+
+    abrirBtn.disabled = sinRed;
+
+    texto.append(
+        crear("strong", "", item.nombre),
+        crear("small", "", "de " + item.autor + (item.guardadoEn ? ", descargada el " + formatoFecha(item.guardadoEn) : ", descargada")),
+        crear("small", "", "necesita internet para abrirse")
+    );
+
+    botones.append(
+        abrirBtn,
+        crearBoton("Quitar de la lista", "btn chico", async () => {
+            /* queda marcada como oculta para que no vuelva a aparecer sola */
+            item.oculto = true;
+            await guardarOffline(item);
+            mostrarDescargas();
+        })
+    );
+
+    fila.append(crear("div", "guardado-icono", "📦"), texto, botones);
+    return fila;
+}
+
+/* abre el archivo de una apk descargada (hace falta internet) */
+async function abrirApkGuardada(item) {
+    let apk = apksCache.find(a => a.id === item.apkId);
+
+    try {
+        if (!apk) {
+            apksCache = await Datos.listarApks();
+            apk = apksCache.find(a => a.id === item.apkId);
+        }
+
+        if (!apk) {
+            alert("Esta aplicación ya no está disponible");
+            return;
+        }
+
+        await abrirArchivo(apk);
+    } catch (error) {
+        alert(error.message);
+    }
+}
+
+/* lista de lo guardado: páginas html (sin internet) y apks descargadas (con internet) */
+async function mostrarDescargas() {
+    let lista = document.getElementById("ListaDescargas");
+    let guardados = [];
+
+    if (navigator.onLine && usuario) await sincronizarApksDescargadas();
+
+    try {
+        guardados = await leerOffline();
+    } catch (error) {
+        console.log("no se pudo leer lo guardado", error);
+    }
+
+    let dueno = usuario ? usuario.id : localStorage.getItem("ultimoUsuario");
+    let paginas = guardados.filter(i => i.tipo !== "archivo").sort((a, b) => b.guardadoEn - a.guardadoEn);
+    let apks = guardados.filter(i => i.tipo === "archivo" && i.usuarioId === dueno && !i.oculto)
+        .sort((a, b) => (b.guardadoEn || 0) - (a.guardadoEn || 0));
+
+    lista.replaceChildren(
+        crear("h2", "seccion", "Páginas HTML (sin internet)"),
+        ...(paginas.length
+            ? paginas.map(crearFilaGuardada)
+            : [crear("p", "nota", "Todavía no guardaste ninguna. Abre un archivo HTML y toca “Descargar para usar sin internet”.")]),
+        crear("h2", "seccion", "Apps descargadas"),
+        ...(apks.length
+            ? apks.map(crearFilaApk)
+            : [crear("p", "nota", "Cuando descargues una apk aparecerá aquí.")])
+    );
+}
+
+
+//////////////////////////////
+//Visualizador de archivos html (pantalla completa)
+//////////////////////////////
+let apkVisor = null;
+let origenVisor = "detalle";
+
+/* los html no pueden usar localStorage dentro del marco aislado: se les da uno temporal para que no fallen */
+const ARREGLO_ALMACENAMIENTO = "<script>try{window.localStorage}catch(e){var m={};var s={" +
+    "getItem:function(k){return k in m?m[k]:null},setItem:function(k,v){m[k]=String(v)}," +
+    "removeItem:function(k){delete m[k]},clear:function(){m={}}," +
+    "key:function(i){return Object.keys(m)[i]||null}," +
+    "get length(){return Object.keys(m).length}};" +
+    "['localStorage','sessionStorage'].forEach(function(n){try{Object.defineProperty(window,n,{value:s,configurable:true})}catch(x){}})}<\/script>";
+
+function prepararHtml(html) {
+    if (/<head[^>]*>/i.test(html)) return html.replace(/<head[^>]*>/i, m => m + ARREGLO_ALMACENAMIENTO);
+    if (/<html[^>]*>/i.test(html)) return html.replace(/<html[^>]*>/i, m => m + ARREGLO_ALMACENAMIENTO);
+    return ARREGLO_ALMACENAMIENTO + html;
+}
+
+/* pantalla completa del dispositivo (algunos navegadores no la permiten: igual se ve a todo el ancho) */
+function pedirPantallaCompleta() {
+    let raiz = document.documentElement;
+
+    if (!document.fullscreenElement && raiz.requestFullscreen) {
+        raiz.requestFullscreen().catch(() => console.log("sin pantalla completa"));
+    }
+}
+
+function AlternarPantallaCompleta() {
+    if (document.fullscreenElement) document.exitFullscreen();
+    else pedirPantallaCompleta();
+}
+
+function mostrarVisor(titulo, html) {
+    document.getElementById("VisorTitulo").textContent = titulo;
+    document.getElementById("VisorMarco").srcdoc = prepararHtml(html);
+}
+
+/* desde el detalle: usa la copia guardada si existe; si no, la descarga ahora */
+async function AbrirVisor(apk) {
+    /* debe ir antes de cualquier espera para que el navegador lo permita */
+    pedirPantallaCompleta();
+
+    apkVisor = apk;
+    origenVisor = "detalle";
+    ir("DvVisor");
+    document.body.style.overflow = "hidden";
+    mostrarVisor(apk.nombre, "<p style='font-family:sans-serif'>cargando...</p>");
+
+    try {
+        let guardada = await leerOfflineUno(claveOffline(apk));
+        let html;
+
+        /* con internet se muestra la versión más nueva (y se actualiza la copia guardada) */
+        if (navigator.onLine) {
+            try {
+                html = await Datos.htmlTexto(apk);
+                if (guardada) await guardarOffline(Object.assign({}, guardada, { html: html }));
+            } catch (error) {
+                console.log("se usa la copia guardada", error);
+            }
+        }
+
+        if (html === undefined && guardada) html = guardada.html;
+        if (html === undefined) throw new Error("No se pudo cargar el archivo");
+
+        mostrarVisor(apk.nombre, html);
+
+        /* cuenta la visita solo si hay internet */
+        try {
+            await Datos.contar(usuario, apk);
+        } catch (error) {
+            console.log("no se contó la visita", error);
+        }
+    } catch (error) {
+        alert(error.message);
+        CerrarVisor();
+    }
+}
+
+/* desde Descargas: no necesita internet ni cuenta */
+function AbrirVisorGuardado(item) {
+    pedirPantallaCompleta();
+
+    origenVisor = "descargas";
+    ir("DvVisor");
+    document.body.style.overflow = "hidden";
+    mostrarVisor(item.nombre, item.html);
+}
+
+function CerrarVisor() {
+    document.getElementById("VisorMarco").srcdoc = "";
+    document.body.style.overflow = "";
+
+    if (document.fullscreenElement) document.exitFullscreen();
+
+    if (origenVisor === "descargas") {
+        ir("DvDescargas");
+        mostrarDescargas();
+    } else {
+        abrirDetalle(apkVisor.id);
+    }
+}
+
+
+//////////////////////////////
+//Carpeta de descargas (ajustes)
+//////////////////////////////
+
+/* solo algunos navegadores (Chrome y Edge de computadora) dejan elegir una carpeta */
+const soportaCarpeta = typeof window.showDirectoryPicker === "function";
+
+const guardarCarpeta = manija => operacionOffline("readwrite", tienda => tienda.put({ clave: "carpeta", manija: manija }), "ajustes");
+const borrarCarpeta = () => operacionOffline("readwrite", tienda => tienda.delete("carpeta"), "ajustes");
+
+async function leerCarpeta() {
+    if (!soportaCarpeta) return null;
+
+    try {
+        let registro = await operacionOffline("readonly", tienda => tienda.get("carpeta"), "ajustes");
+        return registro ? registro.manija : null;
     } catch (error) {
         return null;
     }
 }
 
-function nuevoId() {
-    if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
-    return Date.now().toString(36) + Math.random().toString(36).slice(2);
+/* devuelve la carpeta elegida si el navegador da permiso para escribir en ella */
+async function carpetaConPermiso() {
+    let carpeta = await leerCarpeta();
+    if (!carpeta) return null;
+
+    try {
+        let opciones = { mode: "readwrite" };
+
+        if (await carpeta.queryPermission(opciones) === "granted") return carpeta;
+        if (await carpeta.requestPermission(opciones) === "granted") return carpeta;
+    } catch (error) {
+        console.log("sin permiso para la carpeta", error);
+    }
+    return null;
 }
 
-function extension(nombre) {
-    return (nombre.split(".").pop() || "bin").toLowerCase().replace(/[^a-z0-9]/g, "");
+/* baja el archivo y lo escribe dentro de la carpeta elegida */
+async function escribirEnCarpeta(carpeta, enlace, nombre) {
+    let respuesta = await fetch(enlace);
+    if (!respuesta.ok) throw new Error("No se pudo descargar el archivo");
+
+    let archivo = await carpeta.getFileHandle(nombre.replace(/[\\/:*?"<>|]/g, "_"), { create: true });
+    let escritor = await archivo.createWritable();
+
+    await escritor.write(await respuesta.blob());
+    await escritor.close();
 }
 
-/* nombre seguro para guardar en el almacenamiento */
-function limpiarNombre(nombre) {
-    return nombre.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^A-Za-z0-9._-]/g, "_");
+async function mostrarCarpeta() {
+    let carpeta = await leerCarpeta();
+
+    document.getElementById("CarpetaNombre").textContent = !soportaCarpeta
+        ? "carpeta del navegador"
+        : (carpeta ? carpeta.name : "ninguna elegida (carpeta del navegador)");
+
+    document.getElementById("BtnCarpeta").disabled = !soportaCarpeta;
+    document.getElementById("BtnCarpeta").textContent = carpeta ? "cambiar" : "elegir";
+    document.getElementById("BtnQuitarCarpeta").hidden = !carpeta;
+
+    document.getElementById("NotaCarpeta").textContent = soportaCarpeta
+        ? "Las apks se guardarán en la carpeta que elijas. El navegador te pedirá permiso."
+        : "Este navegador no deja elegir carpeta. Las descargas van a la carpeta que tenga configurada el navegador " +
+          "(en Chrome para Android: Ajustes, Descargas, Ubicación de descarga, si tu versión lo trae).";
 }
 
-/* código al azar con formato XXXX-XXXX-XXXX (sin letras que se confunden) */
-function generarCodigo() {
-    const letras = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-    const bytes = new Uint8Array(12);
-    let texto = "";
+async function ElegirCarpetaBtn() {
+    try {
+        let carpeta = await window.showDirectoryPicker({ mode: "readwrite" });
 
-    if (window.crypto && crypto.getRandomValues) crypto.getRandomValues(bytes);
-    else bytes.forEach((_, i) => { bytes[i] = Math.floor(Math.random() * 256); });
-
-    bytes.forEach((byte, i) => {
-        texto += letras[byte % letras.length];
-        if (i % 4 === 3 && i < 11) texto += "-";
-    });
-    return texto;
+        await guardarCarpeta(carpeta);
+        mostrarCarpeta();
+    } catch (error) {
+        /* si cerraste el selector no pasa nada */
+        if (error.name !== "AbortError") alert("No se pudo elegir la carpeta: " + error.message);
+    }
 }
 
-/* para comparar códigos sin importar guiones, espacios ni mayúsculas */
-function limpiarCodigo(texto) {
-    return String(texto || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
-}
-
-
-//////////////////////////////
-//MODO LOCAL (IndexedDB en este dispositivo)
-//////////////////////////////
-function crearDatosLocal() {
-
-    /* abrir la base: cada tienda guarda un tipo de dato */
-    function abrirBD() {
-        return new Promise((resolve, reject) => {
-            const pedido = indexedDB.open("pkview", 3);
-
-            pedido.onupgradeneeded = () => {
-                const db = pedido.result;
-                if (!db.objectStoreNames.contains("apks")) db.createObjectStore("apks", { keyPath: "id", autoIncrement: true });
-                if (!db.objectStoreNames.contains("comentarios")) db.createObjectStore("comentarios", { keyPath: "id", autoIncrement: true });
-                if (!db.objectStoreNames.contains("codigos")) db.createObjectStore("codigos", { keyPath: "id", autoIncrement: true });
-                if (!db.objectStoreNames.contains("usuarios")) db.createObjectStore("usuarios", { keyPath: "id" });
-                if (!db.objectStoreNames.contains("votos")) db.createObjectStore("votos", { keyPath: "id" });
-            };
-            pedido.onsuccess = () => resolve(pedido.result);
-            pedido.onerror = () => reject(pedido.error);
-        });
-    }
-
-    /* fn recibe las tiendas y devuelve un pedido, una lista de pedidos o nada */
-    async function transaccion(nombres, modo, fn) {
-        const db = await abrirBD();
-
-        return new Promise((resolve, reject) => {
-            const tx = db.transaction(nombres, modo);
-            const tiendas = {};
-            nombres.forEach(nombre => { tiendas[nombre] = tx.objectStore(nombre); });
-
-            const salida = fn(tiendas);
-
-            tx.oncomplete = () => {
-                db.close();
-                resolve(Array.isArray(salida) ? salida.map(p => p.result) : (salida ? salida.result : undefined));
-            };
-            tx.onerror = tx.onabort = () => { db.close(); reject(tx.error); };
-        });
-    }
-
-    /* las url de fotos se liberan al cerrar la pestaña */
-    function urlDe(blob) {
-        return blob ? URL.createObjectURL(blob) : null;
-    }
-
-    async function hash(texto) {
-        if (!(window.crypto && crypto.subtle)) return texto;
-        const datos = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(texto));
-        return Array.from(new Uint8Array(datos)).map(b => b.toString(16).padStart(2, "0")).join("");
-    }
-
-    function aPerfil(u) {
-        if (!u) return null;
-        return { id: u.id, email: u.email, nombre: u.nombre, foto: urlDe(u.foto) };
-    }
-
-    async function todosLosUsuarios() {
-        return transaccion(["usuarios"], "readonly", t => t.usuarios.getAll());
-    }
-
-    /* ids de las apks que esta persona ya descargó */
-    function listaDescargas(usuario) {
-        return JSON.parse(localStorage.getItem("descargas:" + usuario.id) || "[]");
-    }
-
-    return {
-        modo: "local",
-
-        /* ---------- cuentas ---------- */
-        async sesion() {
-            const id = localStorage.getItem("sesionId");
-            if (!id) return null;
-            const u = await transaccion(["usuarios"], "readonly", t => t.usuarios.get(id));
-            return aPerfil(u);
-        },
-
-        async registrar(email, nombre, clave) {
-            email = email.toLowerCase();
-            const usuarios = await todosLosUsuarios();
-
-            if (usuarios.some(u => u.email === email)) throw new Error("Ese correo ya está registrado");
-            if (usuarios.some(u => u.nombre.toLowerCase() === nombre.toLowerCase())) throw new Error("Ese nombre ya está en uso");
-
-            const nuevo = { id: nuevoId(), email: email, nombre: nombre, clave: await hash(clave), foto: null };
-            await transaccion(["usuarios"], "readwrite", t => t.usuarios.add(nuevo));
-
-            localStorage.setItem("sesionId", nuevo.id);
-            return aPerfil(nuevo);
-        },
-
-        async entrar(email, clave) {
-            email = email.toLowerCase();
-            const u = (await todosLosUsuarios()).find(x => x.email === email);
-
-            if (!u) throw new Error("correo no encontrado");
-            if (u.clave !== await hash(clave)) throw new Error("contraseña incorrecta");
-
-            localStorage.setItem("sesionId", u.id);
-            return aPerfil(u);
-        },
-
-        async salir() {
-            localStorage.removeItem("sesionId");
-        },
-
-        async actualizarPerfil(id, { nombre, foto }) {
-            const usuarios = await todosLosUsuarios();
-            const u = usuarios.find(x => x.id === id);
-
-            if (nombre && usuarios.some(x => x.id !== id && x.nombre.toLowerCase() === nombre.toLowerCase())) {
-                throw new Error("Ese nombre ya está en uso");
-            }
-
-            if (nombre) u.nombre = nombre;
-            if (foto) u.foto = foto;
-
-            await transaccion(["usuarios"], "readwrite", t => t.usuarios.put(u));
-            return aPerfil(u);
-        },
-
-        /* ---------- aplicaciones ---------- */
-        async listarApks() {
-            const [apks, usuarios, votos] = await transaccion(["apks", "usuarios", "votos"], "readonly",
-                t => [t.apks.getAll(), t.usuarios.getAll(), t.votos.getAll()]);
-
-            return apks.reverse().map(a => {
-                const autor = usuarios.find(u => u.id === a.autorId);
-                const suyos = votos.filter(v => v.apkId === a.id);
-                const suma = suyos.reduce((total, v) => total + v.puntos, 0);
-
-                return {
-                    id: a.id,
-                    autorId: a.autorId || null,
-                    autor: autor ? autor.nombre : (a.autor || "anónimo"),
-                    autorFoto: autor ? urlDe(autor.foto) : null,
-                    nombre: a.nombre,
-                    descripcion: a.descripcion || "",
-                    tipo: a.tipo || "archivo",
-                    acceso: a.acceso || "libre",
-                    url: a.url || null,
-                    nombreArchivo: a.nombreArchivo || "",
-                    archivoPath: null,
-                    fotoUrl: urlDe(a.imagen),
-                    capturas: (a.capturas || []).map(c => urlDe(c)),
-                    videoUrl: urlDe(a.video),
-                    descargas: a.descargas || 0,
-                    promedio: suyos.length ? Math.round(suma / suyos.length * 10) / 10 : 0,
-                    votos: suyos.length,
-                    fecha: a.fecha
-                };
-            });
-        },
-
-        /* con acceso "codigo" se crean los 50 códigos de un solo uso */
-        async publicar(usuario, { nombre, descripcion, tipo, url, archivo, imagen, capturas, video, acceso }) {
-            await transaccion(["apks", "codigos"], "readwrite", t => {
-                const pedido = t.apks.add({
-                    nombre: nombre,
-                    descripcion: descripcion,
-                    tipo: tipo,
-                    acceso: tipo === "archivo" ? (acceso || "libre") : "libre",
-                    url: url || null,
-                    autorId: usuario.id,
-                    fecha: Date.now(),
-                    archivo: archivo || null,
-                    nombreArchivo: archivo ? archivo.name : "",
-                    imagen: imagen || null,
-                    capturas: capturas || [],
-                    video: video || null,
-                    descargas: 0
-                });
-
-                if (tipo === "archivo" && acceso === "codigo") {
-                    pedido.onsuccess = () => {
-                        const codigos = new Set();
-                        while (codigos.size < TOTAL_CODIGOS) codigos.add(generarCodigo());
-                        codigos.forEach(codigo => t.codigos.add({
-                            apkId: pedido.result,
-                            codigo: codigo,
-                            usuarioId: null,
-                            canjeadoEn: null
-                        }));
-                    };
-                }
-            });
-        },
-
-        async eliminar(id) {
-            await transaccion(["apks", "comentarios", "votos", "codigos"], "readwrite", t => {
-                t.apks.delete(id);
-
-                [["comentarios", "id"], ["votos", "id"], ["codigos", "id"]].forEach(([nombre]) => {
-                    const todos = t[nombre].getAll();
-                    todos.onsuccess = () => todos.result
-                        .filter(x => x.apkId === id).forEach(x => t[nombre].delete(x.id));
-                });
-            });
-        },
-
-        /* texto de un archivo html (para el visualizador) */
-        async htmlTexto(apk) {
-            const a = await transaccion(["apks"], "readonly", t => t.apks.get(apk.id));
-            if (!a || !a.archivo) throw new Error("Este archivo ya no está disponible");
-            return a.archivo.text();
-        },
-
-        /* ---------- descargas ---------- */
-        async archivoUrl(usuario, apk, descargar) {
-            const a = await transaccion(["apks"], "readonly", t => t.apks.get(apk.id));
-            if (!a || !a.archivo) throw new Error("Este archivo ya no está disponible");
-
-            if (apk.acceso === "codigo" && apk.autorId !== usuario.id) {
-                const estado = await this.estadoDesbloqueo(usuario, apk.id);
-                if (!estado.desbloqueada) throw new Error("Desbloquea la descarga con un código");
-            }
-            return URL.createObjectURL(a.archivo);
-        },
-
-        /* las apks cuentan una descarga por persona; las páginas y html cuentan cada visita */
-        async yaDescargue(usuario, apkId) {
-            return listaDescargas(usuario).includes(apkId);
-        },
-
-        /* ids de todas las apks que esta persona descargó */
-        async misDescargas(usuario) {
-            return listaDescargas(usuario);
-        },
-
-        async contar(usuario, apk) {
-            if (apk.tipo === "archivo") {
-                const lista = listaDescargas(usuario);
-                if (lista.includes(apk.id)) return;
-
-                lista.push(apk.id);
-                localStorage.setItem("descargas:" + usuario.id, JSON.stringify(lista));
-            }
-
-            await transaccion(["apks"], "readwrite", t => {
-                const pedido = t.apks.get(apk.id);
-                pedido.onsuccess = () => {
-                    const a = pedido.result;
-                    if (a) {
-                        a.descargas = (a.descargas || 0) + 1;
-                        t.apks.put(a);
-                    }
-                };
-            });
-        },
-
-        /* ---------- códigos de descarga ---------- */
-        /* solo para quien publicó la apk */
-        async codigos(apkId) {
-            const todos = await transaccion(["codigos"], "readonly", t => t.codigos.getAll());
-
-            return todos.filter(c => c.apkId === apkId).map(c => ({
-                id: c.id,
-                codigo: c.codigo,
-                usado: Boolean(c.usuarioId),
-                canjeadoEn: c.canjeadoEn
-            }));
-        },
-
-        async generarCodigos(apkId) {
-            await transaccion(["codigos"], "readwrite", t => {
-                const pedido = t.codigos.getAll();
-                pedido.onsuccess = () => {
-                    if (pedido.result.some(c => c.apkId === apkId)) return;
-
-                    const nuevos = new Set();
-                    while (nuevos.size < TOTAL_CODIGOS) nuevos.add(generarCodigo());
-                    nuevos.forEach(codigo => t.codigos.add({ apkId: apkId, codigo: codigo, usuarioId: null, canjeadoEn: null }));
-                };
-            });
-        },
-
-        async estadoDesbloqueo(usuario, apkId) {
-            const todos = await transaccion(["codigos"], "readonly", t => t.codigos.getAll());
-            const c = todos.find(x => x.apkId === apkId && x.usuarioId === usuario.id);
-
-            return { desbloqueada: Boolean(c), canjeadoEn: c ? c.canjeadoEn : null };
-        },
-
-        async canjear(usuario, apkId, codigo) {
-            const limpio = limpiarCodigo(codigo);
-            let error = null;
-
-            await transaccion(["codigos"], "readwrite", t => {
-                const pedido = t.codigos.getAll();
-                pedido.onsuccess = () => {
-                    const suyos = pedido.result.filter(c => c.apkId === apkId);
-                    const libre = suyos.find(c => !c.usuarioId && limpiarCodigo(c.codigo) === limpio);
-
-                    if (suyos.some(c => c.usuarioId === usuario.id)) error = "Ya desbloqueaste esta aplicación";
-                    else if (!libre) error = "Código inválido o ya usado";
-                    else {
-                        libre.usuarioId = usuario.id;
-                        libre.canjeadoEn = Date.now();
-                        t.codigos.put(libre);
-                    }
-                };
-            });
-
-            if (error) throw new Error(error);
-        },
-
-        /* durante la primera hora, y si aún no la descargó, el código se restablece */
-        async desactivarEnlace(usuario, apkId) {
-            let error = null;
-
-            await transaccion(["codigos"], "readwrite", t => {
-                const pedido = t.codigos.getAll();
-                pedido.onsuccess = () => {
-                    const c = pedido.result.find(x => x.apkId === apkId && x.usuarioId === usuario.id);
-
-                    if (!c) error = "No tienes un enlace activo";
-                    else if (listaDescargas(usuario).includes(apkId)) error = "Ya descargaste esta aplicación";
-                    else if (Date.now() - c.canjeadoEn > HORA) error = "Pasó más de una hora desde que lo activaste";
-                    else {
-                        c.usuarioId = null;
-                        c.canjeadoEn = null;
-                        t.codigos.put(c);
-                    }
-                };
-            });
-
-            if (error) throw new Error(error);
-        },
-
-        /* ---------- calificaciones ---------- */
-        async calificar(usuario, apkId, puntos) {
-            await transaccion(["votos"], "readwrite", t => t.votos.put({
-                id: apkId + ":" + usuario.id,
-                apkId: apkId,
-                usuarioId: usuario.id,
-                puntos: puntos
-            }));
-        },
-
-        async miVoto(usuario, apkId) {
-            const voto = await transaccion(["votos"], "readonly", t => t.votos.get(apkId + ":" + usuario.id));
-            return voto ? voto.puntos : 0;
-        },
-
-        /* ---------- comentarios ---------- */
-        async comentarios(apkId) {
-            const [lista, usuarios] = await transaccion(["comentarios", "usuarios"], "readonly",
-                t => [t.comentarios.getAll(), t.usuarios.getAll()]);
-
-            return lista.filter(c => c.apkId === apkId).map(c => {
-                const autor = usuarios.find(u => u.id === c.autorId);
-                return {
-                    id: c.id,
-                    autorId: c.autorId,
-                    autor: autor ? autor.nombre : "anónimo",
-                    foto: autor ? urlDe(autor.foto) : null,
-                    texto: c.texto,
-                    fecha: c.fecha
-                };
-            });
-        },
-
-        async comentar(usuario, apkId, texto) {
-            await transaccion(["comentarios"], "readwrite", t => t.comentarios.add({
-                apkId: apkId,
-                autorId: usuario.id,
-                texto: texto,
-                fecha: Date.now()
-            }));
-        },
-
-        async borrarComentario(id) {
-            await transaccion(["comentarios"], "readwrite", t => t.comentarios.delete(id));
-        }
-    };
+async function QuitarCarpetaBtn() {
+    await borrarCarpeta();
+    mostrarCarpeta();
 }
 
 
 //////////////////////////////
-//MODO NUBE (Supabase)
+//Editor de archivos html (solo quien publicó)
 //////////////////////////////
-function crearDatosSupabase() {
-    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+let apkEditor = null;
+let textoGuardado = "";
+let temporizadorVista = null;
 
-    /* lanza el error de Supabase o devuelve los datos */
-    function ok({ data, error }) {
-        if (error) {
-            if (error.code === "23505") throw new Error("Ese nombre ya está en uso");
-            throw new Error(error.message);
-        }
-        return data;
+let cajaEditor = document.getElementById("EditorCodigo");
+
+function editorSinGuardar() {
+    return cajaEditor.value !== textoGuardado;
+}
+
+function actualizarEstadoEditor() {
+    let bytes = new Blob([cajaEditor.value]).size;
+
+    document.getElementById("EditorEstado").textContent =
+        (editorSinGuardar() ? "sin guardar" : "guardado") + ", " + Math.ceil(bytes / 1024) + " KB";
+}
+
+function dibujarVistaEditor() {
+    document.getElementById("EditorVista").srcdoc = prepararHtml(cajaEditor.value);
+}
+
+/* en pantallas chicas: cambia entre código y vista previa */
+function EditorPestana(pestana) {
+    let vista = pestana === "vista";
+
+    document.getElementById("EditorZona").classList.toggle("ver-vista", vista);
+    document.getElementById("PestCodigo").classList.toggle("activo", !vista);
+    document.getElementById("PestVista").classList.toggle("activo", vista);
+
+    if (vista) dibujarVistaEditor();
+}
+
+/* solo se abre si eres quien publicó el archivo */
+async function AbrirEditor(apk) {
+    if (apk.autorId !== usuario.id) {
+        alert("Solo quien publicó puede editar este archivo");
+        return;
     }
 
-    /* url pública de un archivo guardado */
-    function urlPublica(bucket, ruta, opciones) {
-        if (!ruta) return null;
-        return sb.storage.from(bucket).getPublicUrl(ruta, opciones).data.publicUrl;
+    apkEditor = apk;
+    ir("DvEditor");
+    document.getElementById("EditorTitulo").textContent = apk.nombre;
+    cajaEditor.value = "cargando...";
+    cajaEditor.disabled = true;
+
+    try {
+        textoGuardado = await Datos.htmlTexto(apk);
+    } catch (error) {
+        alert(error.message);
+        cajaEditor.disabled = false;
+        abrirDetalle(apk.id);
+        return;
     }
 
-    async function subir(bucket, ruta, archivo) {
-        const { error } = await sb.storage.from(bucket).upload(ruta, archivo, { contentType: archivo.type || undefined });
-        if (error) throw new Error(error.message);
+    cajaEditor.disabled = false;
+    cajaEditor.value = textoGuardado;
+    EditorPestana("codigo");
+    dibujarVistaEditor();
+    actualizarEstadoEditor();
+}
+
+cajaEditor.addEventListener("input", () => {
+    actualizarEstadoEditor();
+
+    /* la vista previa se actualiza sola, sin saltos mientras escribes */
+    clearTimeout(temporizadorVista);
+    temporizadorVista = setTimeout(dibujarVistaEditor, 500);
+});
+
+cajaEditor.addEventListener("keydown", evento => {
+    /* Tab escribe dos espacios en vez de saltar a otro botón */
+    if (evento.key === "Tab" && !evento.shiftKey) {
+        evento.preventDefault();
+        cajaEditor.setRangeText("  ", cajaEditor.selectionStart, cajaEditor.selectionEnd, "end");
+        cajaEditor.dispatchEvent(new Event("input"));
     }
 
-    async function aPerfil(user) {
-        if (!user) return null;
-        const { data } = await sb.from("perfiles").select("nombre, foto").eq("id", user.id).maybeSingle();
-        return {
-            id: user.id,
-            email: user.email,
-            nombre: data ? data.nombre : "usuario",
-            foto: data ? urlPublica("imagenes", data.foto) : null
-        };
+    if ((evento.ctrlKey || evento.metaKey) && evento.key.toLowerCase() === "s") {
+        evento.preventDefault();
+        EditorGuardarBtn();
+    }
+});
+
+/* cargar el contenido de un archivo de tu dispositivo dentro del editor */
+document.getElementById("EditorArchivo").addEventListener("change", async function () {
+    let archivo = this.files[0];
+    this.value = "";
+
+    if (!archivo) return;
+
+    if (archivo.size > MAX_HTML) {
+        alert("El archivo html pesa más de 2 MB");
+        return;
     }
 
-    return {
-        modo: "nube",
+    cajaEditor.value = await archivo.text();
+    actualizarEstadoEditor();
+    dibujarVistaEditor();
+});
 
-        /* ---------- cuentas ---------- */
-        async sesion() {
-            const { data } = await sb.auth.getSession();
-            return aPerfil(data.session ? data.session.user : null);
-        },
+async function EditorGuardarBtn() {
+    let boton = document.getElementById("BtnEditorGuardar");
+    let texto = cajaEditor.value;
 
-        /* devuelve null si Supabase pide confirmar el correo antes de entrar */
-        async registrar(email, nombre, clave) {
-            const { data, error } = await sb.auth.signUp({ email: email, password: clave, options: { data: { nombre: nombre } } });
+    if (!texto.trim()) {
+        alert("El archivo no puede quedar vacío");
+        return;
+    }
 
-            if (error) {
-                if (error.message.includes("Database error")) throw new Error("Ese nombre ya está en uso");
-                throw new Error(error.message);
-            }
-            return data.session ? aPerfil(data.user) : null;
-        },
+    if (new Blob([texto]).size > MAX_HTML) {
+        alert("El archivo html pesa más de 2 MB");
+        return;
+    }
 
-        async entrar(email, clave) {
-            const { data, error } = await sb.auth.signInWithPassword({ email: email, password: clave });
-            if (error) throw new Error("correo o contraseña incorrectos");
-            return aPerfil(data.user);
-        },
+    boton.disabled = true;
 
-        async salir() {
-            await sb.auth.signOut();
-        },
+    try {
+        await Datos.actualizarHtml(usuario, apkEditor, texto);
+        textoGuardado = texto;
 
-        async actualizarPerfil(id, { nombre, foto }) {
-            const cambios = {};
+        /* si lo tienes guardado para usar sin internet, esa copia también se actualiza */
+        let copia = await leerOfflineUno(claveOffline(apkEditor));
+        if (copia) await guardarOffline(Object.assign({}, copia, { html: texto }));
 
-            if (nombre) cambios.nombre = nombre;
+        actualizarEstadoEditor();
+    } catch (error) {
+        alert("No se pudo guardar: " + error.message);
+    }
 
-            if (foto) {
-                const ruta = id + "/perfil-" + Date.now() + "." + extension(foto.name);
-                await subir("imagenes", ruta, foto);
-                cambios.foto = ruta;
-            }
+    boton.disabled = false;
+}
 
-            if (Object.keys(cambios).length) {
-                ok(await sb.from("perfiles").update(cambios).eq("id", id));
-            }
+function CerrarEditor() {
+    if (editorSinGuardar() && !confirm("Tienes cambios sin guardar. ¿Salir sin guardarlos?")) return;
 
-            const { data } = await sb.auth.getUser();
-            return aPerfil(data.user);
-        },
+    textoGuardado = cajaEditor.value;
+    document.getElementById("EditorVista").srcdoc = "";
+    abrirDetalle(apkEditor.id);
+}
 
-        /* ---------- aplicaciones ---------- */
-        async listarApks() {
-            const filas = ok(await sb.from("apks_resumen").select("*").order("creado", { ascending: false }));
+/* avisa si cierras la pestaña con cambios sin guardar */
+window.addEventListener("beforeunload", evento => {
+    if (document.getElementById("DvEditor").style.display === "block" && editorSinGuardar()) {
+        evento.preventDefault();
+        evento.returnValue = "";
+    }
+});
 
-            return filas.map(a => ({
-                id: a.id,
-                autorId: a.autor_id,
-                autor: a.autor,
-                autorFoto: urlPublica("imagenes", a.autor_foto),
-                nombre: a.nombre,
-                descripcion: a.descripcion || "",
-                tipo: a.tipo,
-                acceso: a.acceso || "libre",
-                url: a.url,
-                nombreArchivo: a.nombre_archivo || "",
-                archivoPath: a.archivo_path,
-                fotoUrl: urlPublica("imagenes", a.imagen_path),
-                capturas: (a.capturas || []).map(ruta => urlPublica("imagenes", ruta)),
-                videoUrl: urlPublica("videos", a.video_path),
-                descargas: a.descargas,
-                promedio: Number(a.promedio),
-                votos: Number(a.votos),
-                fecha: new Date(a.creado).getTime()
-            }));
-        },
 
-        /* con acceso "codigo" el archivo va a un lugar privado y el servidor crea los 50 códigos */
-        async publicar(usuario, { nombre, descripcion, tipo, url, archivo, imagen, capturas, video, acceso }) {
-            const base = usuario.id + "/" + Date.now();
-            const protegido = tipo === "archivo" && acceso === "codigo";
-            const rutasCapturas = [];
-            let archivoPath = null;
-            let imagenPath = null;
-            let videoPath = null;
+//////////////////////////////
+//Actualizaciones de la página
+//////////////////////////////
 
-            if (archivo) {
-                archivoPath = base + "-" + limpiarNombre(archivo.name);
-                await subir(protegido ? "protegidos" : "archivos", archivoPath, archivo);
-            }
+/* agrega una versión nueva arriba cada vez que cambies la página */
+const ACTUALIZACIONES = [
+    {
+        version: "2.3",
+        fecha: "2026-11-05",
+        cambios: [
+            "Editor de archivos HTML con vista previa: solo quien publicó puede verlo y usarlo",
+            "Al guardar se actualiza el archivo publicado y tu copia sin internet",
+            "En Ajustes puedes elegir la carpeta de descargas (en los navegadores que lo permiten)"
+        ]
+    },
+    {
+        version: "2.2",
+        fecha: "2026-11-05",
+        cambios: [
+            "En Descargas también aparecen las apks que descargaste",
+            "Las apks necesitan internet para abrirse; las páginas HTML guardadas funcionan sin conexión"
+        ]
+    },
+    {
+        version: "2.1",
+        fecha: "2026-11-04",
+        cambios: [
+            "Los archivos HTML se abren en pantalla completa, como una página publicada",
+            "Puedes descargar un HTML al dispositivo y abrirlo sin internet desde Descargas",
+            "La app abre sin conexión y te lleva a tus descargas"
+        ]
+    },
+    {
+        version: "2.0",
+        fecha: "2026-11-04",
+        cambios: [
+            "Nuevo diseño con panel lateral, inicio con filas y detalle como en una tienda",
+            "Apks con descarga libre o con código de un solo uso (50 códigos que solo ve quien publica)",
+            "Puedes desactivar un enlace durante la primera hora y el código se restablece",
+            "Capturas y un video en cada publicación",
+            "Publicar archivos HTML que se ven dentro de la página, además de webs por url"
+        ]
+    },
+    {
+        version: "1.3",
+        fecha: "2026-11-03",
+        cambios: [
+            "Las páginas cuentan visitas y las apks cuentan descargas, por separado",
+            "Cada apk se descarga una sola vez por persona; después el botón cambia a Abrir",
+            "Tu cuenta muestra tus descargas y tus visitas por separado"
+        ]
+    },
+    {
+        version: "1.2",
+        fecha: "2026-11-02",
+        cambios: [
+            "Comentarios, descripción y calificación del 1 al 10 en cada publicación",
+            "Contador de descargas",
+            "Publicar páginas web con su enlace",
+            "Cuenta con foto de perfil, nombre y tus números",
+            "Buscador de aplicaciones",
+            "Ya se puede instalar como app"
+        ]
+    },
+    {
+        version: "1.1",
+        fecha: "2026-11-02",
+        cambios: [
+            "Publicar archivos con una imagen",
+            "Lista de aplicaciones con foto, autor y descarga"
+        ]
+    },
+    {
+        version: "1.0",
+        fecha: "2026-10-01",
+        cambios: [
+            "Registro y login",
+            "Tema claro y oscuro"
+        ]
+    }
+];
 
-            if (imagen) {
-                imagenPath = base + "-icono." + extension(imagen.name);
-                await subir("imagenes", imagenPath, imagen);
-            }
+function mostrarActualizaciones() {
+    let lista = document.getElementById("ListaActualizaciones");
 
-            const lista = capturas || [];
-            for (let i = 0; i < lista.length; i++) {
-                const ruta = base + "-captura" + i + "." + extension(lista[i].name);
-                await subir("imagenes", ruta, lista[i]);
-                rutasCapturas.push(ruta);
-            }
+    lista.replaceChildren(...ACTUALIZACIONES.map(version => {
+        let tarjeta = crear("article", "version");
+        let cambios = crear("ul", "");
 
-            if (video) {
-                videoPath = base + "-video." + extension(video.name);
-                await subir("videos", videoPath, video);
-            }
+        version.cambios.forEach(cambio => cambios.append(crear("li", "", cambio)));
 
-            const nueva = ok(await sb.from("apks").insert({
-                autor_id: usuario.id,
-                nombre: nombre,
-                descripcion: descripcion,
-                tipo: tipo,
-                acceso: tipo === "archivo" ? (acceso || "libre") : "libre",
-                url: url || null,
-                archivo_path: archivoPath,
-                nombre_archivo: archivo ? archivo.name : null,
-                imagen_path: imagenPath,
-                capturas: rutasCapturas,
-                video_path: videoPath
-            }).select("id").single());
-
-            if (protegido) await this.generarCodigos(nueva.id);
-        },
-
-        async eliminar(id) {
-            const fila = ok(await sb.from("apks")
-                .select("archivo_path, imagen_path, capturas, video_path, acceso").eq("id", id).single());
-
-            ok(await sb.from("apks").delete().eq("id", id));
-
-            if (fila.archivo_path) {
-                await sb.storage.from(fila.acceso === "codigo" ? "protegidos" : "archivos").remove([fila.archivo_path]);
-            }
-
-            const imagenes = (fila.capturas || []).concat(fila.imagen_path ? [fila.imagen_path] : []);
-            if (imagenes.length) await sb.storage.from("imagenes").remove(imagenes);
-            if (fila.video_path) await sb.storage.from("videos").remove([fila.video_path]);
-        },
-
-        /* texto de un archivo html (para el visualizador) */
-        async htmlTexto(apk) {
-            const enlace = urlPublica("archivos", apk.archivoPath);
-            if (!enlace) throw new Error("Este archivo ya no está disponible");
-
-            const respuesta = await fetch(enlace);
-            if (!respuesta.ok) throw new Error("No se pudo cargar el archivo");
-            return respuesta.text();
-        },
-
-        /* ---------- descargas ---------- */
-        /* descargar = true fuerza la descarga; false abre el archivo.
-           Los archivos con código solo dan enlace a quien lo desbloqueó (lo decide el servidor). */
-        async archivoUrl(usuario, apk, descargar) {
-            if (!apk.archivoPath) throw new Error("Este archivo ya no está disponible");
-
-            const opciones = descargar ? { download: apk.nombreArchivo || true } : undefined;
-
-            if (apk.tipo === "archivo" && apk.acceso === "codigo") {
-                const { data, error } = await sb.storage.from("protegidos").createSignedUrl(apk.archivoPath, 300, opciones);
-                if (error) throw new Error("Desbloquea la descarga con un código");
-                return data.signedUrl;
-            }
-
-            return urlPublica("archivos", apk.archivoPath, opciones);
-        },
-
-        async yaDescargue(usuario, apkId) {
-            const fila = ok(await sb.from("descargas_usuario").select("apk_id")
-                .eq("apk_id", apkId).eq("usuario_id", usuario.id).maybeSingle());
-            return Boolean(fila);
-        },
-
-        /* ids de todas las apks que esta persona descargó */
-        async misDescargas(usuario) {
-            const filas = ok(await sb.from("descargas_usuario").select("apk_id").eq("usuario_id", usuario.id));
-            return filas.map(f => f.apk_id);
-        },
-
-        /* el servidor decide: una descarga por persona en apks, cada visita en páginas y html */
-        async contar(usuario, apk) {
-            ok(await sb.rpc("contar_descarga", { p_apk: apk.id }));
-        },
-
-        /* ---------- códigos de descarga ---------- */
-        /* el servidor solo se los muestra a quien publicó la apk */
-        async codigos(apkId) {
-            const filas = ok(await sb.from("codigos_descarga").select("id, codigo, usado_por, usado_en")
-                .eq("apk_id", apkId).order("id", { ascending: true }));
-
-            return filas.map(c => ({
-                id: c.id,
-                codigo: c.codigo,
-                usado: Boolean(c.usado_por),
-                canjeadoEn: c.usado_en ? new Date(c.usado_en).getTime() : null
-            }));
-        },
-
-        /* crea los 50 códigos (el servidor solo lo permite una vez y solo al autor) */
-        async generarCodigos(apkId) {
-            ok(await sb.rpc("generar_codigos", { p_apk: apkId, p_cantidad: TOTAL_CODIGOS }));
-        },
-
-        async estadoDesbloqueo(usuario, apkId) {
-            const fila = ok(await sb.from("accesos").select("activado_en")
-                .eq("apk_id", apkId).eq("usuario_id", usuario.id).maybeSingle());
-
-            return {
-                desbloqueada: Boolean(fila),
-                canjeadoEn: fila ? new Date(fila.activado_en).getTime() : null
-            };
-        },
-
-        async canjear(usuario, apkId, codigo) {
-            ok(await sb.rpc("canjear_codigo", { p_apk: apkId, p_codigo: codigo }));
-        },
-
-        async desactivarEnlace(usuario, apkId) {
-            ok(await sb.rpc("devolver_codigo", { p_apk: apkId }));
-        },
-
-        /* ---------- calificaciones ---------- */
-        async calificar(usuario, apkId, puntos) {
-            ok(await sb.from("calificaciones").upsert({ apk_id: apkId, usuario_id: usuario.id, puntos: puntos }));
-        },
-
-        async miVoto(usuario, apkId) {
-            const voto = ok(await sb.from("calificaciones").select("puntos")
-                .eq("apk_id", apkId).eq("usuario_id", usuario.id).maybeSingle());
-            return voto ? voto.puntos : 0;
-        },
-
-        /* ---------- comentarios ---------- */
-        async comentarios(apkId) {
-            const filas = ok(await sb.from("comentarios").select("id, texto, creado, autor_id, perfiles(nombre, foto)")
-                .eq("apk_id", apkId).order("creado", { ascending: true }));
-
-            return filas.map(c => ({
-                id: c.id,
-                autorId: c.autor_id,
-                autor: c.perfiles ? c.perfiles.nombre : "anónimo",
-                foto: c.perfiles ? urlPublica("imagenes", c.perfiles.foto) : null,
-                texto: c.texto,
-                fecha: new Date(c.creado).getTime()
-            }));
-        },
-
-        async comentar(usuario, apkId, texto) {
-            ok(await sb.from("comentarios").insert({ apk_id: apkId, autor_id: usuario.id, texto: texto }));
-        },
-
-        async borrarComentario(id) {
-            ok(await sb.from("comentarios").delete().eq("id", id));
-        }
-    };
+        tarjeta.append(
+            crear("h2", "version-titulo", "Versión " + version.version),
+            crear("span", "apk-fecha", formatoFecha(version.fecha)),
+            cambios
+        );
+        return tarjeta;
+    }));
 }
 
 
 //////////////////////////////
-//Datos: lo único que usa app.js
+//Instalar como app (PWA)
 //////////////////////////////
-const Datos = usarSupabase ? crearDatosSupabase() : crearDatosLocal();
+let instalador = null;
+
+window.addEventListener("beforeinstallprompt", evento => {
+    evento.preventDefault();
+    instalador = evento;
+    document.getElementById("FilaInstalar").hidden = false;
+});
+
+async function InstalarBtn() {
+    if (!instalador) return;
+
+    instalador.prompt();
+    await instalador.userChoice;
+
+    instalador = null;
+    document.getElementById("FilaInstalar").hidden = true;
+}
+
+/* el service worker se registra en index.html, antes que este archivo */
+
+
+//////////////////////////////
+//Sin conexión
+//////////////////////////////
+
+/* esconde lo que necesita internet y avisa */
+function actualizarRed() {
+    let sinRed = !navigator.onLine;
+
+    document.getElementById("body").classList.toggle("sin-red", sinRed);
+    document.getElementById("AvisoRed").hidden = !sinRed;
+
+    /* los botones de las apks dependen de la conexión */
+    if (pantallaActual === "DvDescargas") mostrarDescargas();
+}
+
+window.addEventListener("offline", actualizarRed);
+window.addEventListener("online", () => {
+    actualizarRed();
+
+    /* si se abrió sin internet y sin cuenta, ahora sí se puede entrar */
+    if (!usuario) cargar();
+});
+
+//////////////////////////////
+//cargar
+//////////////////////////////
+aplicarTema(localStorage.getItem("temas"));
+ElegirAcceso("libre");
+
+async function cargar() {
+    document.getElementById("ModoDatos").textContent = Datos.modo === "nube"
+        ? "datos guardados en la nube (Supabase)"
+        : "datos guardados solo en este dispositivo";
+
+    actualizarRed();
+
+    /* sin internet: directo a lo que guardaste en el dispositivo */
+    if (!navigator.onLine) {
+        actualizarMenuUsuario();
+        DescargasBtn();
+        return;
+    }
+
+    try {
+        usuario = await Datos.sesion();
+    } catch (error) {
+        usuario = null;
+    }
+
+    if (usuario) {
+        actualizarMenuUsuario();
+        InicioBtn();
+        console.log("datos cargados");
+    } else {
+        ir("DvRegister");
+        console.log("registrate");
+    }
+}
+
+window.addEventListener("load", cargar);
