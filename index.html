@@ -56,6 +56,13 @@ registrar
             required
         >
 
+        <label class="acepto">
+            <input type="checkbox" id="AceptoTerminos">
+            <span>Acepto los
+                <button type="button" class="enlace-texto" onclick="abrirTerminos()">términos y condiciones</button>
+            </span>
+        </label>
+
         <button type="button" class="btn" onclick="RegistrarBtn()">registrar</button>
 
         <button type="button" class="btn" onclick="AbrirLogin()">ya tengo una cuenta</button>
@@ -92,7 +99,73 @@ login
 
         <button type="button" class="btn" onclick="LoginBtn()">login</button>
 
+        <button type="button" class="btn" onclick="AbrirRecuperar()">olvidé mi contraseña</button>
+
         <button type="button" class="btn" onclick="AbrirRegistro()">no tengo cuenta</button>
+
+    </div>
+
+<!------------------------------------
+recuperar contraseña
+------------------------------------>
+
+    <div class="cajita grande" id="DvRecuperar">
+
+        <h1 class="Text">recuperar contraseña</h1>
+
+        <div id="RecPaso1">
+            <p class="nota">Escribe el correo de tu cuenta y te enviamos un código.</p>
+
+            <input
+                id="RecEmail"
+                class="input"
+                type="email"
+                placeholder="correo electrónico"
+                aria-label="correo electrónico"
+                autocomplete="email"
+            >
+
+            <button type="button" id="BtnRecEnviar" class="btn" onclick="RecuperarEnviarBtn()">enviar código</button>
+        </div>
+
+        <div id="RecPaso2" hidden>
+            <p class="nota" id="RecAviso"></p>
+
+            <input
+                id="RecCodigo"
+                class="input"
+                type="text"
+                inputmode="numeric"
+                maxlength="10"
+                placeholder="código del correo"
+                aria-label="código del correo"
+                autocomplete="one-time-code"
+            >
+
+            <input
+                id="RecClave"
+                class="input"
+                type="password"
+                placeholder="contraseña nueva"
+                aria-label="contraseña nueva"
+                autocomplete="new-password"
+            >
+
+            <input
+                id="RecClave2"
+                class="input"
+                type="password"
+                placeholder="repite la contraseña nueva"
+                aria-label="repite la contraseña nueva"
+                autocomplete="new-password"
+            >
+
+            <button type="button" id="BtnRecCambiar" class="btn" onclick="RecuperarCambiarBtn()">cambiar contraseña</button>
+
+            <button type="button" class="btn" onclick="RecuperarEnviarBtn()">reenviar código</button>
+        </div>
+
+        <button type="button" class="btn" onclick="AbrirLogin()">volver al login</button>
 
     </div>
 
@@ -394,6 +467,111 @@ cuenta
                     </div>
                     <p class="nota">El tiempo cuenta mientras usas cada sección. En los mini juegos no cuenta mientras estás en pausa.</p>
 
+                    <h2 class="seccion">Seguridad</h2>
+
+                    <div class="formulario">
+
+                        <div class="panel panel-form">
+                            <h3>Cambiar contraseña</h3>
+
+                            <div class="chips-fila">
+                                <button type="button" id="ClaveModoActual" class="chip activo" onclick="ElegirModoClave('actual')">con mi contraseña actual</button>
+                                <button type="button" id="ClaveModoCodigo" class="chip" onclick="ElegirModoClave('codigo')">con un código al correo</button>
+                            </div>
+
+                            <div id="CampoClaveActual" class="panel-form">
+                                <input
+                                    id="ClaveActual"
+                                    class="input"
+                                    type="password"
+                                    placeholder="contraseña actual"
+                                    aria-label="contraseña actual"
+                                    autocomplete="current-password"
+                                >
+                            </div>
+
+                            <div id="CampoClaveCodigo" class="panel-form" hidden>
+                                <p class="nota">Te enviamos un código al correo de tu cuenta.</p>
+                                <button type="button" id="BtnCodigoClave" class="btn chico" onclick="EnviarCodigoClaveBtn()">enviar código</button>
+                                <input
+                                    id="ClaveCodigo"
+                                    class="input"
+                                    type="text"
+                                    inputmode="numeric"
+                                    maxlength="10"
+                                    placeholder="código del correo"
+                                    aria-label="código del correo"
+                                    autocomplete="one-time-code"
+                                >
+                            </div>
+
+                            <input
+                                id="ClaveNueva"
+                                class="input"
+                                type="password"
+                                placeholder="contraseña nueva"
+                                aria-label="contraseña nueva"
+                                autocomplete="new-password"
+                            >
+
+                            <input
+                                id="ClaveNueva2"
+                                class="input"
+                                type="password"
+                                placeholder="repite la contraseña nueva"
+                                aria-label="repite la contraseña nueva"
+                                autocomplete="new-password"
+                            >
+
+                            <button type="button" id="BtnCambiarClave" class="btn azul ancho" onclick="CambiarClaveBtn()">cambiar contraseña</button>
+                        </div>
+
+                        <div class="panel panel-form">
+                            <h3>Cambiar correo</h3>
+
+                            <div id="CorreoPaso1" class="panel-form">
+                                <input
+                                    id="CorreoNuevo"
+                                    class="input"
+                                    type="email"
+                                    placeholder="correo nuevo"
+                                    aria-label="correo nuevo"
+                                    autocomplete="email"
+                                >
+
+                                <input
+                                    id="ClaveParaCorreo"
+                                    class="input"
+                                    type="password"
+                                    placeholder="tu contraseña actual"
+                                    aria-label="tu contraseña actual"
+                                    autocomplete="current-password"
+                                >
+
+                                <button type="button" id="BtnEnviarCorreo" class="btn azul ancho" onclick="EnviarCodigoCorreoBtn()">enviar código al correo nuevo</button>
+                            </div>
+
+                            <div id="CorreoPaso2" class="panel-form" hidden>
+                                <p class="nota" id="CorreoAviso"></p>
+
+                                <input
+                                    id="CodigoCorreo"
+                                    class="input"
+                                    type="text"
+                                    inputmode="numeric"
+                                    maxlength="10"
+                                    placeholder="código del correo nuevo"
+                                    aria-label="código del correo nuevo"
+                                    autocomplete="one-time-code"
+                                >
+
+                                <button type="button" class="btn azul ancho" onclick="ConfirmarCorreoBtn()">confirmar correo</button>
+                                <button type="button" class="btn chico" onclick="CancelarCorreoBtn()">cancelar</button>
+                            </div>
+                        </div>
+
+                    </div>
+
                     <h2 class="seccion">Mis publicaciones</h2>
                     <div id="MisApks" class="rejilla"></div>
 
@@ -437,6 +615,11 @@ temas
                     </div>
                     <p class="nota nota-ajuste" id="NotaCarpeta"></p>
 
+                    <div class="ajuste-fila">
+                        <span>Términos y condiciones</span>
+                        <button type="button" class="btn chico" onclick="abrirTerminos()">leer</button>
+                    </div>
+
                     <div class="ajuste-fila" id="FilaInstalar" hidden>
                         <span>Instalar PkStore como app</span>
                         <button type="button" id="BtnInstalar" class="btn azul chico" onclick="InstalarBtn()">instalar</button>
@@ -448,518 +631,6 @@ temas
                     </div>
 
                     <p class="nota" id="ModoDatos"></p>
-
-
-
-<!-- BOTÓN PARA ABRIR -->
-<button onclick="abrirTerminos()">
-    Términos y Condiciones
-</button>
-
-<!-- VENTANA DE TÉRMINOS -->
-<div id="Terminos" class="Terminos">
-
-    <div class="TerminosHeader">
-        <h2>📜 Términos y Condiciones</h2>
-        <button onclick="cerrarTerminos()">✕</button>
-    </div>
-
-    <div class="TerminosContenido">
-
-        <h2>PkStore</h2>
-        <p class="fechaTerminos">
-            Última actualización: 6 de noviembre de 2026
-        </p>
-
-        <p>
-            Bienvenido a PkStore. Estos Términos y Condiciones
-            regulan el acceso, registro y utilización de nuestra
-            plataforma, incluyendo sus funciones, servicios y
-            contenidos publicados por los usuarios.
-        </p>
-
-        <p>
-            Al acceder, registrarse o utilizar PkStore,
-            aceptas las condiciones descritas en este documento.
-            Si no estás de acuerdo con ellas, debes abstenerte
-            de utilizar los servicios que requieren dicha aceptación.
-        </p>
-
-        <hr>
-
-        <h3>1. ¿Qué es PkStore?</h3>
-
-        <p>
-            PkStore es una plataforma digital destinada a descubrir,
-            compartir y consultar aplicaciones, páginas web,
-            herramientas digitales y minijuegos.
-        </p>
-
-        <p>La plataforma permite a sus usuarios:</p>
-
-        <ul>
-            <li>Crear cuentas personales.</li>
-            <li>Iniciar y cerrar sesión.</li>
-            <li>Publicar aplicaciones, páginas web y minijuegos.</li>
-            <li>Compartir archivos y enlaces.</li>
-            <li>Consultar publicaciones de otros usuarios.</li>
-            <li>Comentar y valorar contenido.</li>
-            <li>Interactuar con otros miembros de la comunidad.</li>
-        </ul>
-
-        <p>
-            PkStore funciona como una plataforma de distribución
-            y descubrimiento de contenido digital. La disponibilidad
-            de cada publicación depende de su autor y de las
-            condiciones de la plataforma.
-        </p>
-
-        <hr>
-
-        <h3>2. Aceptación de los términos</h3>
-
-        <p>
-            Al crear una cuenta o utilizar las funciones de PkStore,
-            el usuario declara que:
-        </p>
-
-        <ul>
-            <li>Ha leído estos Términos y Condiciones.</li>
-            <li>Comprende las reglas de utilización de la plataforma.</li>
-            <li>Se compromete a respetar las normas establecidas.</li>
-            <li>No utilizará PkStore para actividades ilegales o perjudiciales.</li>
-        </ul>
-
-        <p>
-            La aceptación de estos términos no elimina los derechos
-            que la legislación aplicable reconoce a los usuarios.
-        </p>
-
-        <hr>
-
-        <h3>3. Registro y cuentas de usuario</h3>
-
-        <p>
-            Para utilizar determinadas funciones de PkStore
-            será necesario crear una cuenta.
-        </p>
-
-        <p>El usuario se compromete a:</p>
-
-        <ul>
-            <li>Proporcionar información verdadera y actualizada.</li>
-            <li>Utilizar un nombre de usuario apropiado.</li>
-            <li>Mantener la confidencialidad de sus credenciales.</li>
-            <li>No compartir su cuenta con personas no autorizadas.</li>
-            <li>Notificar cualquier uso no autorizado de su cuenta.</li>
-        </ul>
-
-        <p>
-            Cada usuario es responsable de las actividades realizadas
-            mediante su cuenta, en la medida permitida por la legislación
-            aplicable.
-        </p>
-
-        <p>
-            PkStore podrá restringir o suspender cuentas que incumplan
-            estos términos.
-        </p>
-
-        <hr>
-
-        <h3>4. Publicación de contenido</h3>
-
-        <p>
-            PkStore permite a los usuarios publicar aplicaciones,
-            páginas web, herramientas digitales y minijuegos.
-        </p>
-
-        <p>Al publicar contenido, el usuario declara que:</p>
-
-        <ul>
-            <li>Tiene los derechos o permisos necesarios para compartirlo.</li>
-            <li>El contenido no infringe derechos de terceros.</li>
-            <li>La publicación no contiene información engañosa.</li>
-            <li>No utiliza contenido robado, pirateado o distribuido ilegalmente.</li>
-            <li>La información proporcionada sobre el contenido es correcta.</li>
-        </ul>
-
-        <p>
-            El autor conserva los derechos que le correspondan
-            sobre sus creaciones.
-        </p>
-
-        <p>
-            Al publicar contenido, concede a PkStore una autorización
-            no exclusiva para alojarlo, almacenarlo, mostrarlo y
-            distribuirlo dentro de las funciones de la plataforma,
-            mientras la publicación permanezca disponible y conforme
-            a las condiciones aplicables.
-        </p>
-
-        <hr>
-
-        <h3>5. Subida de archivos</h3>
-
-        <p>
-            Los usuarios pueden compartir archivos relacionados
-            con aplicaciones, páginas web y minijuegos.
-        </p>
-
-        <p>Está prohibido subir:</p>
-
-        <ul>
-            <li>Archivos maliciosos o diseñados para perjudicar dispositivos.</li>
-            <li>Virus, troyanos y otros programas dañinos.</li>
-            <li>Archivos destinados a robar información personal.</li>
-            <li>Contenido ilegal.</li>
-            <li>Material que infrinja derechos de autor.</li>
-            <li>Archivos que intenten explotar vulnerabilidades de otros usuarios.</li>
-        </ul>
-
-        <p>
-            PkStore podrá retirar archivos que representen un riesgo
-            para la seguridad de la plataforma o de sus usuarios.
-        </p>
-
-        <p>
-            La publicación de un archivo no significa que PkStore
-            garantice que sea seguro, funcional o compatible con
-            todos los dispositivos.
-        </p>
-
-        <hr>
-
-        <h3>6. Aplicaciones y contenido de terceros</h3>
-
-        <p>
-            PkStore puede contener enlaces, aplicaciones, páginas web
-            y archivos creados por terceros.
-        </p>
-
-        <p>
-            El contenido publicado por los usuarios no representa
-            necesariamente la opinión, recomendación o aprobación
-            de PkStore.
-        </p>
-
-        <p>
-            Cada autor es responsable de los permisos, licencias,
-            derechos y obligaciones relacionados con su contenido.
-        </p>
-
-        <p>
-            Los usuarios deben actuar con precaución antes de descargar,
-            instalar o utilizar archivos externos.
-        </p>
-
-        <p>
-            PkStore podrá revisar, restringir o retirar publicaciones
-            que incumplan las normas de la plataforma.
-        </p>
-
-        <hr>
-
-        <h3>7. Comentarios y valoraciones</h3>
-
-        <p>
-            Los usuarios pueden comentar y valorar las publicaciones
-            disponibles.
-        </p>
-
-        <p>Al utilizar estas funciones, se comprometen a:</p>
-
-        <ul>
-            <li>Publicar opiniones respetuosas.</li>
-            <li>No realizar amenazas ni acoso.</li>
-            <li>No publicar información privada de otras personas.</li>
-            <li>No utilizar comentarios para realizar spam.</li>
-            <li>No manipular artificialmente las valoraciones.</li>
-            <li>No publicar opiniones fraudulentas o deliberadamente engañosas.</li>
-        </ul>
-
-        <p>
-            PkStore podrá eliminar comentarios o valoraciones que
-            incumplan estas condiciones.
-        </p>
-
-        <p>
-            Las opiniones publicadas pertenecen a sus respectivos
-            autores y no representan necesariamente a PkStore.
-        </p>
-
-        <hr>
-
-        <h3>8. Conductas prohibidas</h3>
-
-        <p>Queda prohibido utilizar PkStore para:</p>
-
-        <ul>
-            <li>Distribuir software malicioso.</li>
-            <li>Realizar estafas o fraudes.</li>
-            <li>Suplantar la identidad de otros usuarios.</li>
-            <li>Robar cuentas o información personal.</li>
-            <li>Intentar acceder sin autorización a sistemas privados.</li>
-            <li>Publicar contenido ilegal.</li>
-            <li>Distribuir contenido protegido sin autorización.</li>
-            <li>Manipular comentarios o valoraciones.</li>
-            <li>Realizar spam o publicidad engañosa.</li>
-            <li>Interferir deliberadamente con el funcionamiento de la plataforma.</li>
-        </ul>
-
-        <p>
-            El incumplimiento de estas reglas puede provocar
-            la eliminación de publicaciones, restricciones
-            o suspensión de cuentas.
-        </p>
-
-        <hr>
-
-        <h3>9. Derechos de propiedad intelectual</h3>
-
-        <p>
-            Los diseños, logotipos, elementos gráficos, textos
-            y componentes originales de PkStore están protegidos
-            por los derechos de propiedad intelectual que correspondan.
-        </p>
-
-        <p>
-            No se permite copiar, modificar, distribuir o utilizar
-            estos elementos sin la autorización correspondiente,
-            salvo cuando la ley lo permita.
-        </p>
-
-        <p>
-            Los usuarios conservan los derechos sobre sus propias
-            creaciones, siempre que les pertenezcan legítimamente.
-        </p>
-
-        <p>
-            Si consideras que una publicación infringe tus derechos,
-            puedes comunicarte con la administración de PkStore
-            para solicitar su revisión.
-        </p>
-
-        <hr>
-
-        <h3>10. Moderación y eliminación de contenido</h3>
-
-        <p>PkStore se reserva el derecho de:</p>
-
-        <ul>
-            <li>Revisar publicaciones denunciadas.</li>
-            <li>Retirar contenido que infrinja estos términos.</li>
-            <li>Eliminar archivos peligrosos.</li>
-            <li>Ocultar comentarios inapropiados.</li>
-            <li>Restringir publicaciones que representen riesgos.</li>
-            <li>Suspender cuentas que incumplan las normas.</li>
-        </ul>
-
-        <p>
-            Siempre que resulte razonable, se procurará informar
-            al usuario afectado sobre las medidas adoptadas
-            y los motivos correspondientes.
-        </p>
-
-        <hr>
-
-        <h3>11. Disponibilidad del servicio</h3>
-
-        <p>
-            PkStore procura mantener sus servicios disponibles,
-            pero no garantiza que la plataforma funcione
-            sin interrupciones.
-        </p>
-
-        <p>Podrían producirse:</p>
-
-        <ul>
-            <li>Mantenimientos técnicos.</li>
-            <li>Errores temporales.</li>
-            <li>Problemas de conexión.</li>
-            <li>Fallos de almacenamiento.</li>
-            <li>Cambios en las funciones disponibles.</li>
-        </ul>
-
-        <p>
-            PkStore podrá modificar, suspender o descontinuar
-            determinadas funciones cuando resulte necesario,
-            respetando las obligaciones legales aplicables.
-        </p>
-
-        <hr>
-
-        <h3>12. Protección de datos y privacidad</h3>
-
-        <p>
-            PkStore podrá recopilar y tratar información necesaria
-            para el funcionamiento de la plataforma, como:
-        </p>
-
-        <ul>
-            <li>Información de registro.</li>
-            <li>Nombre de usuario.</li>
-            <li>Dirección de correo electrónico.</li>
-            <li>Información de publicaciones.</li>
-            <li>Comentarios y valoraciones.</li>
-            <li>Información técnica necesaria para la seguridad y funcionamiento del servicio.</li>
-        </ul>
-
-        <p>
-            El tratamiento de estos datos deberá realizarse
-            conforme a la Política de Privacidad de PkStore
-            y la legislación aplicable.
-        </p>
-
-        <p>
-            La Política de Privacidad constituye un documento
-            independiente de estos términos.
-        </p>
-
-        <hr>
-
-        <h3>13. Seguridad de los usuarios</h3>
-
-        <p>
-            Los usuarios deben tomar precauciones al descargar
-            archivos o acceder a enlaces publicados por terceros.
-        </p>
-
-        <p>Se recomienda:</p>
-
-        <ul>
-            <li>Verificar el origen de los archivos.</li>
-            <li>Utilizar herramientas de seguridad actualizadas.</li>
-            <li>Evitar enlaces sospechosos.</li>
-            <li>No compartir contraseñas.</li>
-            <li>No proporcionar información personal a sitios desconocidos.</li>
-        </ul>
-
-        <p>
-            PkStore podrá tomar medidas para reducir los riesgos,
-            pero no garantiza que todos los archivos y enlaces
-            externos estén libres de amenazas.
-        </p>
-
-        <hr>
-
-        <h3>14. Limitación de responsabilidad</h3>
-
-        <p>
-            En la medida permitida por la legislación aplicable,
-            PkStore no garantiza la calidad, seguridad, disponibilidad
-            o funcionamiento de los contenidos publicados por terceros.
-        </p>
-
-        <p>
-            PkStore no será responsable de daños derivados de
-            contenidos externos o acciones de terceros cuando
-            legalmente no le corresponda asumir dicha responsabilidad.
-        </p>
-
-        <p>
-            Nada de lo establecido en esta sección excluye
-            responsabilidades que no puedan excluirse legalmente.
-        </p>
-
-        <hr>
-
-        <h3>15. Suspensión y eliminación de cuentas</h3>
-
-        <p>
-            PkStore podrá suspender o eliminar cuentas cuando:
-        </p>
-
-        <ul>
-            <li>Se incumplan estos términos.</li>
-            <li>Se realicen actividades fraudulentas.</li>
-            <li>Se distribuya contenido peligroso o ilegal.</li>
-            <li>Se abuse de las funciones de la plataforma.</li>
-            <li>Se ponga en riesgo la seguridad de otros usuarios.</li>
-        </ul>
-
-        <p>
-            Los usuarios podrán solicitar la eliminación de sus
-            cuentas mediante los medios de contacto habilitados
-            por la plataforma.
-        </p>
-
-        <p>
-            La eliminación de una cuenta y el tratamiento posterior
-            de sus datos se realizarán conforme a la Política
-            de Privacidad y las obligaciones legales aplicables.
-        </p>
-
-        <hr>
-
-        <h3>16. Modificaciones de los términos</h3>
-
-        <p>
-            PkStore podrá actualizar estos Términos y Condiciones
-            para reflejar cambios en sus servicios, funciones
-            o requisitos legales.
-        </p>
-
-        <p>
-            Cuando se realicen modificaciones importantes,
-            se procurará informar a los usuarios mediante
-            la plataforma u otros medios disponibles.
-        </p>
-
-        <p>
-            La fecha de última actualización aparecerá
-            al principio del documento.
-        </p>
-
-        <hr>
-
-        <h3>17. Legislación aplicable</h3>
-
-        <p>
-            Estos términos deberán interpretarse conforme
-            a las leyes aplicables de la República Dominicana,
-            cuando corresponda, sin perjuicio de las normas
-            obligatorias de protección al consumidor y de
-            protección de datos que puedan resultar aplicables.
-        </p>
-
-        <p>
-            Las controversias se resolverán ante las autoridades
-            competentes conforme a la legislación aplicable.
-        </p>
-
-        <hr>
-
-        <h3>18. Contacto y soporte</h3>
-
-        <p>
-            Si tienes preguntas, deseas denunciar una publicación
-            o necesitas comunicar un problema relacionado con
-            PkStore, puedes contactar con la administración
-            mediante los canales oficiales de soporte de la plataforma.
-        </p>
-
-        <hr>
-
-        <div class="TerminosFinal">
-            <h3>PkStore</h3>
-            <p>
-                Plataforma de aplicaciones, páginas web y minijuegos.
-            </p>
-            <p>
-                Al utilizar PkStore, confirmas que has leído
-                y aceptado estos Términos y Condiciones.
-            </p>
-        </div>
-
-    </div>
-
-    <div class="TerminosFooter">
-        <button onclick="cerrarTerminos()">Cerrar</button>
-    </div>
-
-</div>
-
 
                 </section>
 
@@ -1064,6 +735,515 @@ visualizador html en pantalla completa
 
         <div id="Lightbox" class="lightbox" hidden onclick="CerrarLightbox()">
             <img id="LightboxImg" alt="">
+        </div>
+
+    </div>
+
+
+<!------------------------------------
+términos y condiciones
+------------------------------------>
+    <div id="TerminosFondo" class="terminos-fondo" onclick="cerrarTerminos()"></div>
+
+    <div id="Terminos" class="Terminos" role="dialog" aria-modal="true" aria-label="Términos y condiciones">
+
+        <div class="TerminosHeader">
+            <h2>📜 Términos y Condiciones</h2>
+            <button type="button" aria-label="cerrar" onclick="cerrarTerminos()">✕</button>
+        </div>
+
+        <div class="TerminosContenido" id="TerminosContenido">
+
+            <h2>PkStore</h2>
+            <p class="fechaTerminos">
+                Última actualización: 6 de noviembre de 2026
+            </p>
+
+            <p>
+                Bienvenido a PkStore. Estos Términos y Condiciones
+                regulan el acceso, registro y utilización de nuestra
+                plataforma, incluyendo sus funciones, servicios y
+                contenidos publicados por los usuarios.
+            </p>
+
+            <p>
+                Al acceder, registrarse o utilizar PkStore,
+                aceptas las condiciones descritas en este documento.
+                Si no estás de acuerdo con ellas, debes abstenerte
+                de utilizar los servicios que requieren dicha aceptación.
+            </p>
+
+            <hr>
+
+            <h3>1. ¿Qué es PkStore?</h3>
+
+            <p>
+                PkStore es una plataforma digital destinada a descubrir,
+                compartir y consultar aplicaciones, páginas web,
+                herramientas digitales y minijuegos.
+            </p>
+
+            <p>La plataforma permite a sus usuarios:</p>
+
+            <ul>
+                <li>Crear cuentas personales.</li>
+                <li>Iniciar y cerrar sesión.</li>
+                <li>Publicar aplicaciones, páginas web y minijuegos.</li>
+                <li>Compartir archivos y enlaces.</li>
+                <li>Consultar publicaciones de otros usuarios.</li>
+                <li>Comentar y valorar contenido.</li>
+                <li>Interactuar con otros miembros de la comunidad.</li>
+            </ul>
+
+            <p>
+                PkStore funciona como una plataforma de distribución
+                y descubrimiento de contenido digital. La disponibilidad
+                de cada publicación depende de su autor y de las
+                condiciones de la plataforma.
+            </p>
+
+            <hr>
+
+            <h3>2. Aceptación de los términos</h3>
+
+            <p>
+                Al crear una cuenta o utilizar las funciones de PkStore,
+                el usuario declara que:
+            </p>
+
+            <ul>
+                <li>Ha leído estos Términos y Condiciones.</li>
+                <li>Comprende las reglas de utilización de la plataforma.</li>
+                <li>Se compromete a respetar las normas establecidas.</li>
+                <li>No utilizará PkStore para actividades ilegales o perjudiciales.</li>
+            </ul>
+
+            <p>
+                La aceptación de estos términos no elimina los derechos
+                que la legislación aplicable reconoce a los usuarios.
+            </p>
+
+            <hr>
+
+            <h3>3. Registro y cuentas de usuario</h3>
+
+            <p>
+                Para utilizar determinadas funciones de PkStore
+                será necesario crear una cuenta.
+            </p>
+
+            <p>El usuario se compromete a:</p>
+
+            <ul>
+                <li>Proporcionar información verdadera y actualizada.</li>
+                <li>Utilizar un nombre de usuario apropiado.</li>
+                <li>Mantener la confidencialidad de sus credenciales.</li>
+                <li>No compartir su cuenta con personas no autorizadas.</li>
+                <li>Notificar cualquier uso no autorizado de su cuenta.</li>
+            </ul>
+
+            <p>
+                Cada usuario es responsable de las actividades realizadas
+                mediante su cuenta, en la medida permitida por la legislación
+                aplicable.
+            </p>
+
+            <p>
+                PkStore podrá restringir o suspender cuentas que incumplan
+                estos términos.
+            </p>
+
+            <hr>
+
+            <h3>4. Publicación de contenido</h3>
+
+            <p>
+                PkStore permite a los usuarios publicar aplicaciones,
+                páginas web, herramientas digitales y minijuegos.
+            </p>
+
+            <p>Al publicar contenido, el usuario declara que:</p>
+
+            <ul>
+                <li>Tiene los derechos o permisos necesarios para compartirlo.</li>
+                <li>El contenido no infringe derechos de terceros.</li>
+                <li>La publicación no contiene información engañosa.</li>
+                <li>No utiliza contenido robado, pirateado o distribuido ilegalmente.</li>
+                <li>La información proporcionada sobre el contenido es correcta.</li>
+            </ul>
+
+            <p>
+                El autor conserva los derechos que le correspondan
+                sobre sus creaciones.
+            </p>
+
+            <p>
+                Al publicar contenido, concede a PkStore una autorización
+                no exclusiva para alojarlo, almacenarlo, mostrarlo y
+                distribuirlo dentro de las funciones de la plataforma,
+                mientras la publicación permanezca disponible y conforme
+                a las condiciones aplicables.
+            </p>
+
+            <hr>
+
+            <h3>5. Subida de archivos</h3>
+
+            <p>
+                Los usuarios pueden compartir archivos relacionados
+                con aplicaciones, páginas web y minijuegos.
+            </p>
+
+            <p>Está prohibido subir:</p>
+
+            <ul>
+                <li>Archivos maliciosos o diseñados para perjudicar dispositivos.</li>
+                <li>Virus, troyanos y otros programas dañinos.</li>
+                <li>Archivos destinados a robar información personal.</li>
+                <li>Contenido ilegal.</li>
+                <li>Material que infrinja derechos de autor.</li>
+                <li>Archivos que intenten explotar vulnerabilidades de otros usuarios.</li>
+            </ul>
+
+            <p>
+                PkStore podrá retirar archivos que representen un riesgo
+                para la seguridad de la plataforma o de sus usuarios.
+            </p>
+
+            <p>
+                La publicación de un archivo no significa que PkStore
+                garantice que sea seguro, funcional o compatible con
+                todos los dispositivos.
+            </p>
+
+            <hr>
+
+            <h3>6. Aplicaciones y contenido de terceros</h3>
+
+            <p>
+                PkStore puede contener enlaces, aplicaciones, páginas web
+                y archivos creados por terceros.
+            </p>
+
+            <p>
+                El contenido publicado por los usuarios no representa
+                necesariamente la opinión, recomendación o aprobación
+                de PkStore.
+            </p>
+
+            <p>
+                Cada autor es responsable de los permisos, licencias,
+                derechos y obligaciones relacionados con su contenido.
+            </p>
+
+            <p>
+                Los usuarios deben actuar con precaución antes de descargar,
+                instalar o utilizar archivos externos.
+            </p>
+
+            <p>
+                PkStore podrá revisar, restringir o retirar publicaciones
+                que incumplan las normas de la plataforma.
+            </p>
+
+            <hr>
+
+            <h3>7. Comentarios y valoraciones</h3>
+
+            <p>
+                Los usuarios pueden comentar y valorar las publicaciones
+                disponibles.
+            </p>
+
+            <p>Al utilizar estas funciones, se comprometen a:</p>
+
+            <ul>
+                <li>Publicar opiniones respetuosas.</li>
+                <li>No realizar amenazas ni acoso.</li>
+                <li>No publicar información privada de otras personas.</li>
+                <li>No utilizar comentarios para realizar spam.</li>
+                <li>No manipular artificialmente las valoraciones.</li>
+                <li>No publicar opiniones fraudulentas o deliberadamente engañosas.</li>
+            </ul>
+
+            <p>
+                PkStore podrá eliminar comentarios o valoraciones que
+                incumplan estas condiciones.
+            </p>
+
+            <p>
+                Las opiniones publicadas pertenecen a sus respectivos
+                autores y no representan necesariamente a PkStore.
+            </p>
+
+            <hr>
+
+            <h3>8. Conductas prohibidas</h3>
+
+            <p>Queda prohibido utilizar PkStore para:</p>
+
+            <ul>
+                <li>Distribuir software malicioso.</li>
+                <li>Realizar estafas o fraudes.</li>
+                <li>Suplantar la identidad de otros usuarios.</li>
+                <li>Robar cuentas o información personal.</li>
+                <li>Intentar acceder sin autorización a sistemas privados.</li>
+                <li>Publicar contenido ilegal.</li>
+                <li>Distribuir contenido protegido sin autorización.</li>
+                <li>Manipular comentarios o valoraciones.</li>
+                <li>Realizar spam o publicidad engañosa.</li>
+                <li>Interferir deliberadamente con el funcionamiento de la plataforma.</li>
+            </ul>
+
+            <p>
+                El incumplimiento de estas reglas puede provocar
+                la eliminación de publicaciones, restricciones
+                o suspensión de cuentas.
+            </p>
+
+            <hr>
+
+            <h3>9. Derechos de propiedad intelectual</h3>
+
+            <p>
+                Los diseños, logotipos, elementos gráficos, textos
+                y componentes originales de PkStore están protegidos
+                por los derechos de propiedad intelectual que correspondan.
+            </p>
+
+            <p>
+                No se permite copiar, modificar, distribuir o utilizar
+                estos elementos sin la autorización correspondiente,
+                salvo cuando la ley lo permita.
+            </p>
+
+            <p>
+                Los usuarios conservan los derechos sobre sus propias
+                creaciones, siempre que les pertenezcan legítimamente.
+            </p>
+
+            <p>
+                Si consideras que una publicación infringe tus derechos,
+                puedes comunicarte con la administración de PkStore
+                para solicitar su revisión.
+            </p>
+
+            <hr>
+
+            <h3>10. Moderación y eliminación de contenido</h3>
+
+            <p>PkStore se reserva el derecho de:</p>
+
+            <ul>
+                <li>Revisar publicaciones denunciadas.</li>
+                <li>Retirar contenido que infrinja estos términos.</li>
+                <li>Eliminar archivos peligrosos.</li>
+                <li>Ocultar comentarios inapropiados.</li>
+                <li>Restringir publicaciones que representen riesgos.</li>
+                <li>Suspender cuentas que incumplan las normas.</li>
+            </ul>
+
+            <p>
+                Siempre que resulte razonable, se procurará informar
+                al usuario afectado sobre las medidas adoptadas
+                y los motivos correspondientes.
+            </p>
+
+            <hr>
+
+            <h3>11. Disponibilidad del servicio</h3>
+
+            <p>
+                PkStore procura mantener sus servicios disponibles,
+                pero no garantiza que la plataforma funcione
+                sin interrupciones.
+            </p>
+
+            <p>Podrían producirse:</p>
+
+            <ul>
+                <li>Mantenimientos técnicos.</li>
+                <li>Errores temporales.</li>
+                <li>Problemas de conexión.</li>
+                <li>Fallos de almacenamiento.</li>
+                <li>Cambios en las funciones disponibles.</li>
+            </ul>
+
+            <p>
+                PkStore podrá modificar, suspender o descontinuar
+                determinadas funciones cuando resulte necesario,
+                respetando las obligaciones legales aplicables.
+            </p>
+
+            <hr>
+
+            <h3>12. Protección de datos y privacidad</h3>
+
+            <p>
+                PkStore podrá recopilar y tratar información necesaria
+                para el funcionamiento de la plataforma, como:
+            </p>
+
+            <ul>
+                <li>Información de registro.</li>
+                <li>Nombre de usuario.</li>
+                <li>Dirección de correo electrónico.</li>
+                <li>Información de publicaciones.</li>
+                <li>Comentarios y valoraciones.</li>
+                <li>Información técnica necesaria para la seguridad y funcionamiento del servicio.</li>
+            </ul>
+
+            <p>
+                El tratamiento de estos datos deberá realizarse
+                conforme a la Política de Privacidad de PkStore
+                y la legislación aplicable.
+            </p>
+
+            <p>
+                La Política de Privacidad constituye un documento
+                independiente de estos términos.
+            </p>
+
+            <hr>
+
+            <h3>13. Seguridad de los usuarios</h3>
+
+            <p>
+                Los usuarios deben tomar precauciones al descargar
+                archivos o acceder a enlaces publicados por terceros.
+            </p>
+
+            <p>Se recomienda:</p>
+
+            <ul>
+                <li>Verificar el origen de los archivos.</li>
+                <li>Utilizar herramientas de seguridad actualizadas.</li>
+                <li>Evitar enlaces sospechosos.</li>
+                <li>No compartir contraseñas.</li>
+                <li>No proporcionar información personal a sitios desconocidos.</li>
+            </ul>
+
+            <p>
+                PkStore podrá tomar medidas para reducir los riesgos,
+                pero no garantiza que todos los archivos y enlaces
+                externos estén libres de amenazas.
+            </p>
+
+            <hr>
+
+            <h3>14. Limitación de responsabilidad</h3>
+
+            <p>
+                En la medida permitida por la legislación aplicable,
+                PkStore no garantiza la calidad, seguridad, disponibilidad
+                o funcionamiento de los contenidos publicados por terceros.
+            </p>
+
+            <p>
+                PkStore no será responsable de daños derivados de
+                contenidos externos o acciones de terceros cuando
+                legalmente no le corresponda asumir dicha responsabilidad.
+            </p>
+
+            <p>
+                Nada de lo establecido en esta sección excluye
+                responsabilidades que no puedan excluirse legalmente.
+            </p>
+
+            <hr>
+
+            <h3>15. Suspensión y eliminación de cuentas</h3>
+
+            <p>
+                PkStore podrá suspender o eliminar cuentas cuando:
+            </p>
+
+            <ul>
+                <li>Se incumplan estos términos.</li>
+                <li>Se realicen actividades fraudulentas.</li>
+                <li>Se distribuya contenido peligroso o ilegal.</li>
+                <li>Se abuse de las funciones de la plataforma.</li>
+                <li>Se ponga en riesgo la seguridad de otros usuarios.</li>
+            </ul>
+
+            <p>
+                Los usuarios podrán solicitar la eliminación de sus
+                cuentas mediante los medios de contacto habilitados
+                por la plataforma.
+            </p>
+
+            <p>
+                La eliminación de una cuenta y el tratamiento posterior
+                de sus datos se realizarán conforme a la Política
+                de Privacidad y las obligaciones legales aplicables.
+            </p>
+
+            <hr>
+
+            <h3>16. Modificaciones de los términos</h3>
+
+            <p>
+                PkStore podrá actualizar estos Términos y Condiciones
+                para reflejar cambios en sus servicios, funciones
+                o requisitos legales.
+            </p>
+
+            <p>
+                Cuando se realicen modificaciones importantes,
+                se procurará informar a los usuarios mediante
+                la plataforma u otros medios disponibles.
+            </p>
+
+            <p>
+                La fecha de última actualización aparecerá
+                al principio del documento.
+            </p>
+
+            <hr>
+
+            <h3>17. Legislación aplicable</h3>
+
+            <p>
+                Estos términos deberán interpretarse conforme
+                a las leyes aplicables de la República Dominicana,
+                cuando corresponda, sin perjuicio de las normas
+                obligatorias de protección al consumidor y de
+                protección de datos que puedan resultar aplicables.
+            </p>
+
+            <p>
+                Las controversias se resolverán ante las autoridades
+                competentes conforme a la legislación aplicable.
+            </p>
+
+            <hr>
+
+            <h3>18. Contacto y soporte</h3>
+
+            <p>
+                Si tienes preguntas, deseas denunciar una publicación
+                o necesitas comunicar un problema relacionado con
+                PkStore, puedes contactar con la administración
+                mediante los canales oficiales de soporte de la plataforma.
+            </p>
+
+            <hr>
+
+            <div class="TerminosFinal">
+                <h3>PkStore</h3>
+                <p>
+                    Plataforma de aplicaciones, páginas web y minijuegos.
+                </p>
+                <p>
+                    Al utilizar PkStore, confirmas que has leído
+                    y aceptado estos Términos y Condiciones.
+                </p>
+            </div>
+
+        </div>
+
+        <div class="TerminosFooter">
+            <button type="button" onclick="cerrarTerminos()">Cerrar</button>
         </div>
 
     </div>
