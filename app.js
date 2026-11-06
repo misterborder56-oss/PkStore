@@ -16,6 +16,7 @@ function cerrar(id) {
 const PANTALLAS_TIENDA = [
     "DvInicio",
     "DvApk",
+    "DvMinijuegos",
     "DvDetalle",
     "DvFile",
     "DvCuenta",
@@ -32,12 +33,14 @@ function ocultarPantallas() {
 }
 
 let pantallaActual = "DvInicio";
+let pantallaMostrada = "DvInicio";
 let vistaAnterior = "DvInicio";
 let filtroTipo = "todo";
 
 /* IR A UNA PANTALLA (cierra las demás) */
 function ir(id) {
     ocultarPantallas();
+    pantallaMostrada = id;
 
     if (PANTALLAS_TIENDA.includes(id)) {
         abrir("Shell");
@@ -100,6 +103,12 @@ function ApkBtn() {
 function PaginasBtn() {
     filtroTipo = "web";
     ir("DvApk");
+    mostrarApks();
+}
+
+/* mini juegos */
+function MinijuegosBtn() {
+    ir("DvMinijuegos");
     mostrarApks();
 }
 
@@ -167,6 +176,7 @@ function AbrirActualizaciones() {
 function repintar(id) {
     if (id === "DvInicio") pintarInicio();
     else if (id === "DvApk") pintarApks();
+    else if (id === "DvMinijuegos") pintarMinijuegos();
     else if (id === "DvCuenta") mostrarCuenta();
     else if (id === "DvDescargas") mostrarDescargas();
 }
@@ -176,21 +186,58 @@ function repintar(id) {
 //Temas
 //////////////////////////////
 
-/* aplica el tema: los colores los pone el css con la clase Bdc */
-function aplicarTema(tema) {
-    const claro = tema === "claro";
+/* cada tema es una clase del css (tema-oceano, tema-bosque...); "claro" usa la clase Bdc */
+const TEMAS = [
+    { id: "oscuro", nombre: "Oscuro", colores: ["#121318", "#1a1f2b", "#377df4"] },
+    { id: "claro", nombre: "Claro", colores: ["#f6f8fc", "#ffffff", "#377df4"] },
+    { id: "medianoche", nombre: "Medianoche", colores: ["#000000", "#101014", "#6ea8ff"] },
+    { id: "oceano", nombre: "Océano", colores: ["#08161e", "#102838", "#22b8cf"] },
+    { id: "bosque", nombre: "Bosque", colores: ["#0c150f", "#15271c", "#3fb56b"] },
+    { id: "atardecer", nombre: "Atardecer", colores: ["#170f0d", "#2a1a17", "#ff7a45"] },
+    { id: "violeta", nombre: "Violeta", colores: ["#110d1b", "#1f1731", "#9b6bff"] },
+    { id: "rosa", nombre: "Rosa", colores: ["#170d14", "#2a1624", "#ff5fa2"] },
+    { id: "arena", nombre: "Arena", colores: ["#f4eee1", "#ffffff", "#c0762b"] }
+];
 
-    document.getElementById("body").classList.toggle("Bdc", claro);
-    document.getElementById("Cambiar").textContent = claro ? "☀" : "☪︎";
+/* aplica el tema guardado (si no existe, usa el oscuro) */
+function aplicarTema(tema) {
+    const cuerpo = document.getElementById("body");
+    const elegido = TEMAS.find(t => t.id === tema) || TEMAS[0];
+
+    TEMAS.forEach(t => cuerpo.classList.remove("tema-" + t.id));
+    cuerpo.classList.toggle("Bdc", elegido.id === "claro");
+    if (elegido.id !== "oscuro" && elegido.id !== "claro") cuerpo.classList.add("tema-" + elegido.id);
+
+    /* la barra del navegador toma el color de fondo del tema */
+    document.querySelector('meta[name="theme-color"]').setAttribute("content", elegido.colores[0]);
+    pintarTemas(elegido.id);
+}
+
+/* botones de tema en ajustes, con una muestra de sus colores */
+function pintarTemas(activo) {
+    const lista = document.getElementById("ListaTemas");
+
+    lista.replaceChildren(...TEMAS.map(tema => {
+        const boton = crear("button", "tema-opcion" + (tema.id === activo ? " activo" : ""));
+        const muestra = crear("span", "tema-muestra");
+
+        boton.type = "button";
+        tema.colores.forEach(color => {
+            const franja = document.createElement("span");
+            franja.style.background = color;
+            muestra.append(franja);
+        });
+
+        boton.append(muestra, document.createTextNode(tema.nombre));
+        boton.addEventListener("click", () => ElegirTema(tema.id));
+        return boton;
+    }));
 }
 
 /* cambiar y guardar tema */
-function Estilo() {
-    const claro = !document.getElementById("body").classList.contains("Bdc");
-    const tema = claro ? "claro" : "oscuro";
-
-    aplicarTema(tema);
-    localStorage.setItem("temas", tema);
+function ElegirTema(id) {
+    aplicarTema(id);
+    localStorage.setItem("temas", id);
 }
 
 
@@ -240,17 +287,30 @@ function formatoContador(apk) {
     let n = apk.descargas;
 
     if (apk.tipo === "archivo") return n + (n === 1 ? " descarga" : " descargas");
+    if (esMinijuego(apk)) return n + (n === 1 ? " partida" : " partidas");
     return n + (n === 1 ? " visita" : " visitas");
+}
+
+/* solo el nombre del contador: descargas, partidas o visitas */
+function nombreContador(apk) {
+    return formatoContador({ tipo: apk.tipo, categoria: apk.categoria, descargas: 2 }).replace(/^\d+ /, "");
+}
+
+/* un archivo html marcado como mini juego */
+function esMinijuego(apk) {
+    return apk.tipo === "html" && apk.categoria === "minijuego";
 }
 
 function nombreTipo(apk) {
     if (apk.tipo === "pagina") return "Página web";
+    if (esMinijuego(apk)) return "Mini juego";
     if (apk.tipo === "html") return "Archivo HTML";
     return "App";
 }
 
 function emojiTipo(apk) {
     if (apk.tipo === "pagina") return "🌐";
+    if (esMinijuego(apk)) return "🎮";
     if (apk.tipo === "html") return "📄";
     return "📦";
 }
@@ -319,6 +379,7 @@ async function copiarTexto(texto) {
 function iniciarSesion(perfil) {
     usuario = perfil;
     localStorage.setItem("ultimoUsuario", perfil.id);
+    cargarPendiente();
     actualizarMenuUsuario();
     InicioBtn();
 }
@@ -395,6 +456,7 @@ async function LoginBtn() {
 
 
 async function SalirBtn() {
+    await enviarTiempo();
     await Datos.salir();
     usuario = null;
     localStorage.removeItem("ultimoUsuario");
@@ -422,13 +484,16 @@ async function mostrarCuenta() {
 
         /* descargas (apks) y visitas (páginas y html) por separado */
         let descargas = mias.filter(a => a.tipo === "archivo").reduce((total, a) => total + a.descargas, 0);
-        let visitas = mias.filter(a => a.tipo !== "archivo").reduce((total, a) => total + a.descargas, 0);
+        let visitas = mias.filter(a => a.tipo !== "archivo" && !esMinijuego(a)).reduce((total, a) => total + a.descargas, 0);
+        let partidas = mias.filter(esMinijuego).reduce((total, a) => total + a.descargas, 0);
         let votos = mias.reduce((total, a) => total + a.votos, 0);
         let suma = mias.reduce((total, a) => total + a.promedio * a.votos, 0);
 
         document.getElementById("DatoPublicadas").textContent = mias.length;
         document.getElementById("DatoDescargas").textContent = descargas;
         document.getElementById("DatoVisitas").textContent = visitas;
+        document.getElementById("DatoPartidas").textContent = partidas;
+        mostrarTiempos();
         document.getElementById("DatoCalificacion").textContent =
             votos ? (suma / votos).toFixed(1) + " / 10" : "—";
 
@@ -486,6 +551,7 @@ async function GuardarCuentaBtn() {
 
 let tipoPublicacion = "archivo";
 let accesoPublicacion = "libre";
+let categoriaPublicacion = "general";
 let urlsPrevias = [];
 
 let inpArchivo = document.getElementById("SubirFile");
@@ -504,12 +570,21 @@ function ElegirTipo(tipo) {
     document.getElementById("InpApkUrl").hidden = tipo !== "pagina";
     document.getElementById("LabelArchivo").hidden = tipo === "pagina";
     document.getElementById("CampoAcceso").hidden = tipo !== "archivo";
+    document.getElementById("CampoCategoria").hidden = tipo !== "html";
     document.getElementById("TituloArchivo").textContent = tipo === "html" ? "Archivo HTML" : "Archivo de la apk";
 
     inpArchivo.accept = tipo === "html" ? ".html,.htm,text/html" : "";
     inpArchivo.value = "";
 
     actualizarSeleccion();
+}
+
+/* un archivo html puede ser una página normal o un mini juego */
+function ElegirCategoria(categoria) {
+    categoriaPublicacion = categoria;
+
+    document.getElementById("CatGeneral").classList.toggle("activo", categoria === "general");
+    document.getElementById("CatMinijuego").classList.toggle("activo", categoria === "minijuego");
 }
 
 /* descarga libre o con código de un solo uso */
@@ -629,6 +704,7 @@ async function PublicarBtn() {
             nombre: nombre,
             descripcion: descripcion,
             tipo: tipoPublicacion,
+            categoria: tipoPublicacion === "html" ? categoriaPublicacion : "general",
             acceso: accesoPublicacion,
             url: enlace,
             archivo: archivo,
@@ -648,6 +724,7 @@ async function PublicarBtn() {
     ["InpApkNombre", "InpApkDescripcion", "InpApkUrl"].forEach(id => { document.getElementById(id).value = ""; });
     [inpArchivo, inpImagen, inpCapturas, inpVideo].forEach(input => { input.value = ""; });
     ElegirAcceso("libre");
+    ElegirCategoria("general");
     ElegirTipo("archivo");
 
     /* abre lo que acabas de publicar (si tiene códigos, ahí los ves) */
@@ -729,7 +806,8 @@ function pintarInicio() {
     let secciones = [
         ["Mejor calificadas", apksCache.filter(a => a.votos).sort((a, b) => b.promedio - a.promedio || b.votos - a.votos)],
         ["Apps más descargadas", apksCache.filter(a => a.tipo === "archivo" && a.descargas).sort(masVisitas)],
-        ["Páginas más visitadas", apksCache.filter(a => a.tipo !== "archivo" && a.descargas).sort(masVisitas)],
+        ["Páginas más visitadas", apksCache.filter(a => a.tipo !== "archivo" && !esMinijuego(a) && a.descargas).sort(masVisitas)],
+        ["Mini juegos", apksCache.filter(esMinijuego).sort(masVisitas)],
         ["Nuevas", apksCache.slice()]
     ];
 
@@ -753,7 +831,7 @@ function pintarApks() {
     let filtradas = apksCache.filter(apk => {
         let delTipo = filtroTipo === "todo" ||
             (filtroTipo === "archivo" && apk.tipo === "archivo") ||
-            (filtroTipo === "web" && apk.tipo !== "archivo");
+            (filtroTipo === "web" && apk.tipo !== "archivo" && !esMinijuego(apk));
 
         return delTipo && normalizar(apk.nombre + " " + apk.descripcion + " " + apk.autor).includes(texto);
     });
@@ -779,6 +857,23 @@ async function mostrarApks() {
 
     pintarInicio();
     pintarApks();
+    pintarMinijuegos();
+}
+
+/* sección de mini juegos */
+async function pintarMinijuegos() {
+    let lista = document.getElementById("ListaMinijuegos");
+    let juegos = apksCache.filter(esMinijuego);
+
+    lista.replaceChildren(...(juegos.length
+        ? juegos.map(crearTarjetaApp)
+        : [crear("p", "vacio", "Todavía no hay mini juegos. Publica un archivo HTML y elige la categoría “mini juego”.")]));
+
+    /* cuánto llevas jugando */
+    if (usuario && pantallaMostrada === "DvMinijuegos") {
+        let total = await tiemposActuales();
+        document.getElementById("TiempoMinijuegos").textContent = "Llevas " + formatoTiempo(total.minijuegos) + " jugando.";
+    }
 }
 
 
@@ -803,6 +898,8 @@ async function refrescarDetalle(id) {
             CerrarDetalle();
             return;
         }
+
+        apkDetalleActual = apk;
 
         let propia = apk.autorId === usuario.id;
         let conCodigo = apk.tipo === "archivo" && apk.acceso === "codigo";
@@ -849,7 +946,7 @@ function pintarDetalle(apk, datos) {
     let stats = crear("div", "det-stats");
     [
         [apk.votos ? apk.promedio.toFixed(1) + " ★" : "—", apk.votos + (apk.votos === 1 ? " voto" : " votos")],
-        [String(apk.descargas), apk.tipo === "archivo" ? "descargas" : "visitas"],
+        [String(apk.descargas), nombreContador(apk)],
         [nombreTipo(apk), "tipo"]
     ].forEach(([valor, nombre]) => {
         let stat = crear("div", "det-stat");
@@ -947,7 +1044,7 @@ function pintarDetalle(apk, datos) {
         ["Publicado por", apk.autor],
         ["Fecha", formatoFecha(apk.fecha)],
         ["Tipo", nombreTipo(apk)],
-        [apk.tipo === "archivo" ? "Descargas" : "Visitas", String(apk.descargas)],
+        [nombreContador(apk).charAt(0).toUpperCase() + nombreContador(apk).slice(1), String(apk.descargas)],
         ["Calificación", apk.votos ? apk.promedio.toFixed(1) + " / 10" : "sin votos"]
     ].forEach(([nombre, valor]) => {
         let fila = crear("div", "info-fila");
@@ -1002,7 +1099,7 @@ function crearAcciones(apk, datos) {
     }
 
     if (apk.tipo === "html") {
-        caja.append(crearBoton("Abrir en pantalla completa", "btn azul ancho", () => AbrirVisor(apk)));
+        caja.append(crearBoton(esMinijuego(apk) ? "Jugar" : "Abrir en pantalla completa", "btn azul ancho", () => AbrirVisor(apk)));
 
         /* el editor solo lo ve quien publicó el archivo */
         if (apk.autorId === usuario.id) {
@@ -1119,6 +1216,9 @@ async function AbrirPagina(apk) {
     }
 
     window.open(enlace, "_blank", "noopener");
+
+    /* mientras estás en la otra pestaña se cuenta como tiempo en páginas (aproximado) */
+    salidaExterna = Date.now();
 
     try {
         await Datos.contar(usuario, apk);
@@ -1324,7 +1424,12 @@ function CerrarLightbox() {
 }
 
 document.addEventListener("keydown", evento => {
-    if (evento.key === "Escape") CerrarLightbox();
+    if (evento.key !== "Escape") return;
+
+    CerrarLightbox();
+
+    /* con un juego abierto, Esc pausa o sigue */
+    if (pantallaMostrada === "DvVisor") AlternarPausa();
 });
 
 
@@ -1377,6 +1482,7 @@ async function GuardarOfflineBtn(apk) {
             clave: claveOffline(apk),
             nombre: apk.nombre,
             autor: apk.autor,
+            categoria: apk.categoria,
             html: html,
             guardadoEn: Date.now()
         });
@@ -1540,23 +1646,139 @@ async function mostrarDescargas() {
 
 
 //////////////////////////////
-//Visualizador de archivos html (pantalla completa)
+//Visualizador de archivos html (pantalla completa, con pausa)
 //////////////////////////////
 let apkVisor = null;
 let origenVisor = "detalle";
+let visorPausado = false;
+let segundosPartida = 0;
+let htmlVisor = "";
 
-/* los html no pueden usar localStorage dentro del marco aislado: se les da uno temporal para que no fallen */
-const ARREGLO_ALMACENAMIENTO = "<script>try{window.localStorage}catch(e){var m={};var s={" +
-    "getItem:function(k){return k in m?m[k]:null},setItem:function(k,v){m[k]=String(v)}," +
-    "removeItem:function(k){delete m[k]},clear:function(){m={}}," +
-    "key:function(i){return Object.keys(m)[i]||null}," +
-    "get length(){return Object.keys(m).length}};" +
-    "['localStorage','sessionStorage'].forEach(function(n){try{Object.defineProperty(window,n,{value:s,configurable:true})}catch(x){}})}<\/script>";
+/* Este código se copia dentro de cada página html que se abre en el visor.
+   1) Si el navegador no deja usar localStorage en el marco aislado, le da uno temporal.
+   2) Permite pausar: congela relojes, animaciones, temporizadores, sonidos y videos.
+   Se escribe como función para que el navegador revise su sintaxis; luego se convierte a texto. */
+function arregloPagina() {
+    try {
+        try {
+            window.localStorage;
+        } catch (e) {
+            var datos = {};
+            var almacen = {
+                getItem: function (k) { return k in datos ? datos[k] : null; },
+                setItem: function (k, v) { datos[k] = String(v); },
+                removeItem: function (k) { delete datos[k]; },
+                clear: function () { datos = {}; },
+                key: function (i) { return Object.keys(datos)[i] || null; },
+                get length() { return Object.keys(datos).length; }
+            };
+            ["localStorage", "sessionStorage"].forEach(function (n) {
+                try { Object.defineProperty(window, n, { value: almacen, configurable: true }); } catch (x) {}
+            });
+        }
+
+        var pausado = false;
+        var tPausa = 0, pPausa = 0, desfase = 0, pDesfase = 0;
+        var ahoraReal = Date.now.bind(Date);
+        var perfReal = performance.now.bind(performance);
+        var rafReal = window.requestAnimationFrame.bind(window);
+        var timeoutReal = window.setTimeout.bind(window);
+        var intervalReal = window.setInterval.bind(window);
+        var colaRaf = [], colaTimeout = [], medios = [], detenidos = [], contextos = [], suspendidos = [];
+
+        /* el reloj de la página no avanza mientras está en pausa */
+        Date.now = function () { return (pausado ? tPausa : ahoraReal()) - desfase; };
+        performance.now = function () { return (pausado ? pPausa : perfReal()) - pDesfase; };
+
+        window.requestAnimationFrame = function (cb) {
+            return rafReal(function (t) {
+                if (pausado) { colaRaf.push(cb); return; }
+                cb(t - pDesfase);
+            });
+        };
+
+        window.setTimeout = function (fn, ms) {
+            var args = Array.prototype.slice.call(arguments, 2);
+            if (typeof fn !== "function") return timeoutReal.apply(window, arguments);
+            return timeoutReal(function () {
+                if (pausado) { colaTimeout.push(function () { fn.apply(window, args); }); return; }
+                fn.apply(window, args);
+            }, ms);
+        };
+
+        window.setInterval = function (fn, ms) {
+            var args = Array.prototype.slice.call(arguments, 2);
+            if (typeof fn !== "function") return intervalReal.apply(window, arguments);
+            return intervalReal(function () { if (!pausado) fn.apply(window, args); }, ms);
+        };
+
+        /* sonidos y videos */
+        var reproducir = HTMLMediaElement.prototype.play;
+        HTMLMediaElement.prototype.play = function () {
+            if (pausado) return Promise.resolve();
+            if (medios.indexOf(this) < 0) medios.push(this);
+            return reproducir.apply(this, arguments);
+        };
+
+        var Contexto = window.AudioContext || window.webkitAudioContext;
+        if (Contexto) {
+            var Envuelto = function () {
+                var c = new (Function.prototype.bind.apply(Contexto, [null].concat(Array.prototype.slice.call(arguments))))();
+                contextos.push(c);
+                return c;
+            };
+            Envuelto.prototype = Contexto.prototype;
+            window.AudioContext = Envuelto;
+            window.webkitAudioContext = Envuelto;
+        }
+
+        function pausar() {
+            if (pausado) return;
+            pausado = true;
+            tPausa = ahoraReal();
+            pPausa = perfReal();
+
+            medios.forEach(function (m) { if (!m.paused) { m.pause(); detenidos.push(m); } });
+            contextos.forEach(function (c) {
+                if (c.state === "running" && c.suspend) { c.suspend(); suspendidos.push(c); }
+            });
+
+            var estilo = document.createElement("style");
+            estilo.id = "pk-pausa";
+            estilo.textContent = "*{animation-play-state:paused!important;transition:none!important}";
+            (document.head || document.documentElement).appendChild(estilo);
+        }
+
+        function seguir() {
+            if (!pausado) return;
+            desfase += ahoraReal() - tPausa;
+            pDesfase += perfReal() - pPausa;
+            pausado = false;
+
+            var estilo = document.getElementById("pk-pausa");
+            if (estilo) estilo.remove();
+
+            detenidos.splice(0).forEach(function (m) { var p = m.play(); if (p && p.catch) p.catch(function () {}); });
+            suspendidos.splice(0).forEach(function (c) { c.resume(); });
+            colaRaf.splice(0).forEach(function (cb) { window.requestAnimationFrame(cb); });
+            colaTimeout.splice(0).forEach(function (fn) { timeoutReal(fn, 0); });
+        }
+
+        window.addEventListener("message", function (evento) {
+            if (!evento.data || typeof evento.data.pkPausa !== "boolean") return;
+            if (evento.data.pkPausa) pausar(); else seguir();
+        });
+    } catch (error) {
+        /* si algo falla, la página sigue funcionando sin pausa */
+    }
+}
+
+const ARREGLO_PAGINA = "<script>(" + arregloPagina.toString() + ")();<\/script>";
 
 function prepararHtml(html) {
-    if (/<head[^>]*>/i.test(html)) return html.replace(/<head[^>]*>/i, m => m + ARREGLO_ALMACENAMIENTO);
-    if (/<html[^>]*>/i.test(html)) return html.replace(/<html[^>]*>/i, m => m + ARREGLO_ALMACENAMIENTO);
-    return ARREGLO_ALMACENAMIENTO + html;
+    if (/<head[^>]*>/i.test(html)) return html.replace(/<head[^>]*>/i, m => m + ARREGLO_PAGINA);
+    if (/<html[^>]*>/i.test(html)) return html.replace(/<html[^>]*>/i, m => m + ARREGLO_PAGINA);
+    return ARREGLO_PAGINA + html;
 }
 
 /* pantalla completa del dispositivo (algunos navegadores no la permiten: igual se ve a todo el ancho) */
@@ -1573,7 +1795,57 @@ function AlternarPantallaCompleta() {
     else pedirPantallaCompleta();
 }
 
+/* reloj de la partida (no avanza en pausa) */
+function actualizarRelojPartida() {
+    let minutos = Math.floor(segundosPartida / 60);
+    let segundos = String(segundosPartida % 60).padStart(2, "0");
+
+    document.getElementById("VisorTiempo").textContent = minutos + ":" + segundos;
+}
+
+/* manda la orden de pausa o de seguir al juego */
+function mandarPausa(valor) {
+    let ventana = document.getElementById("VisorMarco").contentWindow;
+
+    if (ventana) ventana.postMessage({ pkPausa: valor }, "*");
+}
+
+function pausarVisor() {
+    if (visorPausado) return;
+
+    visorPausado = true;
+    mandarPausa(true);
+    document.getElementById("VisorPausa").hidden = false;
+    document.getElementById("BtnPausa").textContent = "▶ Seguir";
+}
+
+function seguirVisor() {
+    visorPausado = false;
+    mandarPausa(false);
+    document.getElementById("VisorPausa").hidden = true;
+    document.getElementById("BtnPausa").textContent = "⏸ Pausa";
+}
+
+function AlternarPausa() {
+    if (visorPausado) seguirVisor();
+    else pausarVisor();
+}
+
+/* empieza de nuevo: vuelve a cargar la página y el reloj en cero */
+function ReiniciarVisor() {
+    segundosPartida = 0;
+    actualizarRelojPartida();
+    seguirVisor();
+    document.getElementById("VisorMarco").srcdoc = "";
+    setTimeout(() => { document.getElementById("VisorMarco").srcdoc = prepararHtml(htmlVisor); }, 50);
+}
+
 function mostrarVisor(titulo, html) {
+    htmlVisor = html;
+    segundosPartida = 0;
+    actualizarRelojPartida();
+    seguirVisor();
+
     document.getElementById("VisorTitulo").textContent = titulo;
     document.getElementById("VisorMarco").srcdoc = prepararHtml(html);
 }
@@ -1608,7 +1880,7 @@ async function AbrirVisor(apk) {
 
         mostrarVisor(apk.nombre, html);
 
-        /* cuenta la visita solo si hay internet */
+        /* cuenta la visita (o la partida) solo si hay internet */
         try {
             await Datos.contar(usuario, apk);
         } catch (error) {
@@ -1624,6 +1896,7 @@ async function AbrirVisor(apk) {
 function AbrirVisorGuardado(item) {
     pedirPantallaCompleta();
 
+    apkVisor = { id: item.apkId, tipo: "html", categoria: item.categoria || "general" };
     origenVisor = "descargas";
     ir("DvVisor");
     document.body.style.overflow = "hidden";
@@ -1631,6 +1904,7 @@ function AbrirVisorGuardado(item) {
 }
 
 function CerrarVisor() {
+    seguirVisor();
     document.getElementById("VisorMarco").srcdoc = "";
     document.body.style.overflow = "";
 
@@ -1643,6 +1917,151 @@ function CerrarVisor() {
         abrirDetalle(apkVisor.id);
     }
 }
+
+
+//////////////////////////////
+//Tiempo de uso (apks, páginas y mini juegos)
+//////////////////////////////
+const CATEGORIAS_TIEMPO = ["apks", "paginas", "minijuegos"];
+
+let tiempoPendiente = { apks: 0, paginas: 0, minijuegos: 0 };
+let apkDetalleActual = null;
+let salidaExterna = null;
+
+/* segundos 1 a 1 de cada sección; los que no se pudieron enviar quedan guardados en el dispositivo */
+function categoriaDe(apk) {
+    if (!apk) return null;
+    if (apk.tipo === "archivo") return "apks";
+    return esMinijuego(apk) ? "minijuegos" : "paginas";
+}
+
+/* en qué sección estás ahora (null = no cuenta) */
+function categoriaDeUso() {
+    switch (pantallaMostrada) {
+        case "DvApk": return filtroTipo === "archivo" ? "apks" : (filtroTipo === "web" ? "paginas" : null);
+        case "DvMinijuegos": return "minijuegos";
+        case "DvDetalle": return categoriaDe(apkDetalleActual);
+        case "DvVisor": return visorPausado ? null : categoriaDe(apkVisor);
+        default: return null;
+    }
+}
+
+function duenoTiempo() {
+    return usuario ? usuario.id : localStorage.getItem("ultimoUsuario");
+}
+
+function formatoTiempo(segundos) {
+    if (segundos < 60) return segundos + " s";
+
+    let minutos = Math.floor(segundos / 60);
+    if (minutos < 60) return minutos + " min";
+
+    return Math.floor(minutos / 60) + " h " + (minutos % 60) + " min";
+}
+
+function guardarPendiente() {
+    let dueno = duenoTiempo();
+    if (dueno) localStorage.setItem("tiempoPendiente:" + dueno, JSON.stringify(tiempoPendiente));
+}
+
+/* recupera lo que quedó sin enviar la última vez */
+function cargarPendiente() {
+    let dueno = duenoTiempo();
+    if (!dueno) return;
+
+    let guardado = JSON.parse(localStorage.getItem("tiempoPendiente:" + dueno) || "{}");
+    CATEGORIAS_TIEMPO.forEach(c => { tiempoPendiente[c] = Math.max(tiempoPendiente[c], guardado[c] || 0); });
+}
+
+/* envía los segundos acumulados (de a 10 minutos como máximo por vez) */
+async function enviarTiempo() {
+    if (!usuario || !navigator.onLine) return;
+
+    for (let categoria of CATEGORIAS_TIEMPO) {
+        while (tiempoPendiente[categoria] > 0) {
+            let segundos = Math.min(tiempoPendiente[categoria], 600);
+
+            tiempoPendiente[categoria] -= segundos;
+
+            try {
+                await Datos.sumarTiempo(usuario, categoria, segundos);
+            } catch (error) {
+                tiempoPendiente[categoria] += segundos;
+                guardarPendiente();
+                return;
+            }
+        }
+    }
+
+    guardarPendiente();
+}
+
+/* lo guardado + lo que todavía no se envió */
+async function tiemposActuales() {
+    let total = { apks: 0, paginas: 0, minijuegos: 0 };
+
+    try {
+        total = await Datos.misTiempos(usuario);
+    } catch (error) {
+        console.log("no se pudo leer el tiempo", error);
+    }
+
+    CATEGORIAS_TIEMPO.forEach(c => { total[c] += tiempoPendiente[c]; });
+    return total;
+}
+
+async function mostrarTiempos() {
+    let total = await tiemposActuales();
+
+    document.getElementById("TiempoApks").textContent = formatoTiempo(total.apks);
+    document.getElementById("TiempoPaginas").textContent = formatoTiempo(total.paginas);
+    document.getElementById("TiempoJuegos").textContent = formatoTiempo(total.minijuegos);
+}
+
+let segundosSinEnviar = 0;
+
+setInterval(() => {
+    if (document.hidden) return;
+
+    /* el reloj de la partida solo avanza si el juego no está en pausa */
+    if (pantallaMostrada === "DvVisor" && !visorPausado) {
+        segundosPartida++;
+        actualizarRelojPartida();
+    }
+
+    let categoria = categoriaDeUso();
+    if (!categoria || !duenoTiempo()) return;
+
+    tiempoPendiente[categoria]++;
+    segundosSinEnviar++;
+
+    if (segundosSinEnviar >= 30) {
+        segundosSinEnviar = 0;
+        guardarPendiente();
+        enviarTiempo();
+    }
+}, 1000);
+
+document.addEventListener("visibilitychange", () => {
+    if (document.hidden) {
+        /* si sales de la pestaña con un juego abierto, se pausa solo */
+        if (pantallaMostrada === "DvVisor") pausarVisor();
+
+        guardarPendiente();
+        enviarTiempo();
+        return;
+    }
+
+    /* volviste de una página externa: ese rato cuenta como tiempo en páginas */
+    if (salidaExterna) {
+        let segundos = Math.min(Math.round((Date.now() - salidaExterna) / 1000), 7200);
+
+        salidaExterna = null;
+        if (duenoTiempo() && segundos > 0) tiempoPendiente.paginas += segundos;
+    }
+});
+
+window.addEventListener("pagehide", guardarPendiente);
 
 
 //////////////////////////////
@@ -1887,6 +2306,16 @@ window.addEventListener("beforeunload", evento => {
 
 /* agrega una versión nueva arriba cada vez que cambies la página */
 const ACTUALIZACIONES = [
+    {
+        version: "2.4",
+        fecha: "2026-11-06",
+        cambios: [
+            "Nueva sección Mini juegos y la categoría “mini juego” al publicar un archivo HTML",
+            "El visor tiene pausa: Seguir, Reiniciar, Pantalla completa y Salir (también con la tecla Esc)",
+            "En Mi cuenta ves tu tiempo en apks, páginas y mini juegos",
+            "8 temas nuevos en Ajustes: Medianoche, Océano, Bosque, Atardecer, Violeta, Rosa y Arena"
+        ]
+    },
     {
         version: "2.3",
         fecha: "2026-11-05",
