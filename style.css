@@ -9,19 +9,25 @@ variables (tema oscuro por defecto)
     --texto: #8b94a7;
     --input: #222936;
     --input-texto: #e6e9f0;
-    --input-sombra: rgba(55, 125, 244, 0.35);
     --boton: white;
     --boton-texto: black;
     --boton-borde: transparent;
-    --azul: rgb(55, 125, 244);
-    --azul-suave: rgba(55, 125, 244, 0.18);
+    --azul-rgb: 55, 125, 244;
     --estrella: #f5b942;
     --peligro: #ff6b6b;
     --menu: 248px;
 }
 
+/* lo que depende del color principal se calcula en el body, para que cada tema lo cambie */
+.body {
+    --azul: rgb(var(--azul-rgb));
+    --azul-suave: rgba(var(--azul-rgb), 0.18);
+    --input-sombra: rgba(var(--azul-rgb), 0.35);
+    --sombra-azul: rgba(var(--azul-rgb), 0.4);
+}
+
 /* ----------------------------------
-temas 
+temas (cada uno cambia los colores; el botón principal usa --azul-rgb)
 ---------------------------------- */
 .Bdc {
     --fondo: #f6f8fc;
@@ -31,11 +37,96 @@ temas
     --texto: #4c5361;
     --input: #eef1f6;
     --input-texto: #1b1f2a;
-    --input-sombra: rgba(55, 125, 244, 0.25);
     --boton-borde: black;
-    --azul-suave: rgba(55, 125, 244, 0.12);
     --estrella: #d98a00;
     --peligro: #d63b3b;
+}
+
+.Bdc,
+.tema-arena {
+    --azul-suave: rgba(var(--azul-rgb), 0.12);
+    --input-sombra: rgba(var(--azul-rgb), 0.25);
+}
+
+.tema-medianoche {
+    --fondo: #000000;
+    --caja: #07070a;
+    --tarjeta: #101014;
+    --borde: #2a2a32;
+    --texto: #8d8d9a;
+    --input: #17171c;
+    --input-texto: #f0f0f5;
+    --azul-rgb: 110, 168, 255;
+}
+
+.tema-oceano {
+    --fondo: #08161e;
+    --caja: #0b1d28;
+    --tarjeta: #102838;
+    --borde: #1f4257;
+    --texto: #7fa3b5;
+    --input: #143246;
+    --input-texto: #e3f3fa;
+    --azul-rgb: 34, 184, 207;
+}
+
+.tema-bosque {
+    --fondo: #0c150f;
+    --caja: #0f1b13;
+    --tarjeta: #15271c;
+    --borde: #264433;
+    --texto: #86a695;
+    --input: #1b3225;
+    --input-texto: #e6f4ea;
+    --azul-rgb: 63, 181, 107;
+}
+
+.tema-atardecer {
+    --fondo: #170f0d;
+    --caja: #1e1311;
+    --tarjeta: #2a1a17;
+    --borde: #4a2f29;
+    --texto: #b49088;
+    --input: #35211d;
+    --input-texto: #fbebe6;
+    --azul-rgb: 255, 122, 69;
+}
+
+.tema-violeta {
+    --fondo: #110d1b;
+    --caja: #171124;
+    --tarjeta: #1f1731;
+    --borde: #3b2f5c;
+    --texto: #a094c4;
+    --input: #2a2042;
+    --input-texto: #efeaff;
+    --azul-rgb: 155, 107, 255;
+}
+
+.tema-rosa {
+    --fondo: #170d14;
+    --caja: #1e1019;
+    --tarjeta: #2a1624;
+    --borde: #4d2d45;
+    --texto: #b78fa8;
+    --input: #351d2e;
+    --input-texto: #ffeaf4;
+    --azul-rgb: 255, 95, 162;
+}
+
+/* tema claro con tonos cálidos */
+.tema-arena {
+    --fondo: #f4eee1;
+    --caja: #fffaf0;
+    --tarjeta: #ffffff;
+    --borde: #ddd2bd;
+    --texto: #6b5e45;
+    --input: #efe6d3;
+    --input-texto: #2b2417;
+    --boton-borde: #2b2417;
+    --azul-rgb: 192, 118, 43;
+    --estrella: #c27a00;
+    --peligro: #c23a3a;
 }
 
 /* ----------------------------------
@@ -155,7 +246,7 @@ botones
 .btn.azul {
     border-color: transparent;
     background-color: var(--azul);
-    box-shadow: 0 4px 8px rgba(55, 125, 244, 0.4);
+    box-shadow: 0 4px 8px var(--sombra-azul);
     color: white;
 }
 
@@ -476,7 +567,7 @@ inicio
     padding: 24px;
     border: solid 1px var(--borde);
     border-radius: 20px;
-    background: linear-gradient(135deg, rgba(55, 125, 244, 0.35), rgba(55, 125, 244, 0.06));
+    background: linear-gradient(135deg, rgba(var(--azul-rgb), 0.35), rgba(var(--azul-rgb), 0.06));
 }
 
 .hero h1 {
@@ -1079,7 +1170,7 @@ avatares
     display: flex;
     width: 96px;
     height: 96px;
-    box-shadow: 0 4px 8px rgba(55, 125, 244, 0.4);
+    box-shadow: 0 4px 8px var(--sombra-azul);
     font-size: 2.2rem;
     cursor: pointer;
 }
@@ -1213,13 +1304,7 @@ mi cuenta
 }
 
 .datos.cuatro {
-    grid-template-columns: repeat(4, 1fr);
-}
-
-@media (max-width: 599px) {
-    .datos.cuatro {
-        grid-template-columns: repeat(2, 1fr);
-    }
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
 }
 
 .dato {
@@ -1337,12 +1422,55 @@ visualizador html (pantalla completa)
     white-space: nowrap;
 }
 
+.visor-tiempo {
+    color: var(--texto);
+    font-variant-numeric: tabular-nums;
+    font-size: 0.9rem;
+}
+
+.visor-zona {
+    position: relative;
+    height: calc(100% - 52px - env(safe-area-inset-top));
+}
+
 .visor-marco {
     display: block;
     width: 100%;
-    height: calc(100% - 52px - env(safe-area-inset-top));
+    height: 100%;
     border: none;
     background-color: white;
+}
+
+/* menú de pausa encima del juego */
+.visor-pausa {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+}
+
+.visor-pausa-caja {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 240px;
+    padding: 22px;
+    border: solid 1px var(--borde);
+    border-radius: 18px;
+    background-color: var(--caja);
+    text-align: center;
+}
+
+.visor-pausa-caja h2 {
+    margin: 0 0 4px;
+    color: var(--input-texto);
+}
+
+.visor-pausa-caja .btn.chico {
+    width: 100%;
 }
 
 /* ----------------------------------
@@ -1485,6 +1613,52 @@ ajustes: carpeta de descargas
 }
 
 /* ----------------------------------
+selector de temas (ajustes)
+---------------------------------- */
+.temas {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 10px;
+    max-width: 560px;
+    margin-bottom: 8px;
+}
+
+.tema-opcion {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px;
+    border: solid 2px var(--borde);
+    border-radius: 14px;
+    background-color: var(--tarjeta);
+    color: var(--input-texto);
+    font: inherit;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: border-color 0.15s, transform 0.1s;
+}
+
+.tema-opcion:active {
+    transform: scale(0.97);
+}
+
+.tema-opcion.activo {
+    border-color: var(--azul);
+}
+
+.tema-muestra {
+    display: flex;
+    height: 34px;
+    border: solid 1px rgba(128, 128, 128, 0.35);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.tema-muestra span {
+    flex: 1;
+}
+
+/* ----------------------------------
 accesibilidad
 ---------------------------------- */
 .btn:focus-visible,
@@ -1495,6 +1669,7 @@ accesibilidad
 .mini-fila:focus-visible,
 .apk-borrar:focus-visible,
 .avatar:focus-visible,
+.tema-opcion:focus-visible,
 .subida:focus-within {
     outline: 2px solid var(--azul);
     outline-offset: 2px;
