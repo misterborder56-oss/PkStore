@@ -3,7 +3,7 @@
 //////////////////////////////
 
 /* sube el número cuando cambies archivos para renovar la copia guardada */
-const CACHE = "pkStore-v7";
+const CACHE = "pkStore-v8";
 
 /* rutas relativas: funcionan también en https://usuario.github.io/PkStore/ */
 const ARCHIVOS = [
