@@ -9,6 +9,9 @@ const SUPABASE_KEY = "sb_publishable_4kSjmVRyLvesfJo_gkLVtQ_Dy0dbG72";   /* clav
 
 const usarSupabase = Boolean(SUPABASE_URL && SUPABASE_KEY && window.supabase);
 
+/* versión de los términos y condiciones que se aceptan al registrarse */
+const VERSION_TERMINOS = "2026-11-06";
+
 /* códigos de descarga: cuántos se generan y cuánto dura el período para desactivar el enlace */
 const TOTAL_CODIGOS = 50;
 const HORA = 60 * 60 * 1000;
@@ -56,6 +59,28 @@ function generarCodigo() {
         if (i % 4 === 3 && i < 11) texto += "-";
     });
     return texto;
+}
+
+/* código de 6 números para recuperar la cuenta (solo modo local; en la nube lo manda Supabase por correo) */
+function codigoNumerico() {
+    const numeros = new Uint32Array(1);
+
+    if (window.crypto && crypto.getRandomValues) crypto.getRandomValues(numeros);
+    else numeros[0] = Math.floor(Math.random() * 4294967295);
+
+    return String(100000 + (numeros[0] % 900000));
+}
+
+/* mensajes de Supabase Auth en español */
+function traducirErrorAuth(error) {
+    const m = (error.message || "").toLowerCase();
+
+    if (m.includes("different from the old")) return "La contraseña nueva debe ser distinta a la actual";
+    if (m.includes("at least") && m.includes("password")) return "La contraseña es demasiado corta";
+    if (m.includes("rate limit") || m.includes("security purposes") || error.status === 429) return "Pediste demasiados códigos. Espera unos minutos e inténtalo de nuevo";
+    if (m.includes("already been registered") || m.includes("already registered")) return "Ese correo ya está en uso";
+    if (m.includes("expired") || m.includes("invalid")) return "El código no es correcto o ya venció";
+    return error.message;
 }
 
 /* para comparar códigos sin importar guiones, espacios ni mayúsculas */
@@ -149,7 +174,7 @@ function crearDatosLocal() {
             if (usuarios.some(u => u.email === email)) throw new Error("Ese correo ya está registrado");
             if (usuarios.some(u => u.nombre.toLowerCase() === nombre.toLowerCase())) throw new Error("Ese nombre ya está en uso");
 
-            const nuevo = { id: nuevoId(), email: email, nombre: nombre, clave: await hash(clave), foto: null };
+            const nuevo = { id: nuevoId(), email: email, nombre: nombre, clave: await hash(clave), foto: null, terminos: VERSION_TERMINOS };
             await transaccion(["usuarios"], "readwrite", t => t.usuarios.add(nuevo));
 
             localStorage.setItem("sesionId", nuevo.id);
@@ -169,6 +194,74 @@ function crearDatosLocal() {
 
         async salir() {
             localStorage.removeItem("sesionId");
+        },
+
+        /* cambiar la contraseña pide la actual */
+        async cambiarClave(usuario, claveActual, claveNueva) {
+            const u = (await todosLosUsuarios()).find(x => x.id === usuario.id);
+
+            if (!u || u.clave !== await hash(claveActual)) throw new Error("La contraseña actual no es correcta");
+            if (claveActual === claveNueva) throw new Error("La contraseña nueva debe ser distinta a la actual");
+
+            u.clave = await hash(claveNueva);
+            await transaccion(["usuarios"], "readwrite", t => t.usuarios.put(u));
+        },
+
+        /* sin internet no hay correo: en modo local el código se devuelve para mostrarlo en pantalla */
+        async pedirCodigoRecuperacion(email) {
+            const u = (await todosLosUsuarios()).find(x => x.email === email.toLowerCase());
+            if (!u) return {};
+
+            const codigo = codigoNumerico();
+            localStorage.setItem("recuperar:" + u.email, JSON.stringify({ codigo: codigo, expira: Date.now() + 15 * 60000 }));
+            return { demo: codigo };
+        },
+
+        /* con el código se pone una contraseña nueva y se entra a la cuenta */
+        async recuperarConCodigo(email, codigo, claveNueva) {
+            const u = (await todosLosUsuarios()).find(x => x.email === email.toLowerCase());
+            const guardado = u ? JSON.parse(localStorage.getItem("recuperar:" + u.email) || "null") : null;
+
+            if (!guardado || guardado.codigo !== String(codigo).trim() || Date.now() > guardado.expira) {
+                throw new Error("El código no es correcto o ya venció");
+            }
+
+            u.clave = await hash(claveNueva);
+            await transaccion(["usuarios"], "readwrite", t => t.usuarios.put(u));
+
+            localStorage.removeItem("recuperar:" + u.email);
+            localStorage.setItem("sesionId", u.id);
+            return aPerfil(u);
+        },
+
+        /* cambiar el correo pide la contraseña y un código enviado al correo nuevo */
+        async cambiarCorreo(usuario, claveActual, correoNuevo) {
+            correoNuevo = correoNuevo.toLowerCase();
+            const usuarios = await todosLosUsuarios();
+            const u = usuarios.find(x => x.id === usuario.id);
+
+            if (!u || u.clave !== await hash(claveActual)) throw new Error("La contraseña actual no es correcta");
+            if (usuarios.some(x => x.email === correoNuevo)) throw new Error("Ese correo ya está en uso");
+
+            const codigo = codigoNumerico();
+            localStorage.setItem("cambiocorreo:" + u.id, JSON.stringify({ correo: correoNuevo, codigo: codigo, expira: Date.now() + 15 * 60000 }));
+            return { demo: codigo };
+        },
+
+        async confirmarCorreo(usuario, correoNuevo, codigo) {
+            const guardado = JSON.parse(localStorage.getItem("cambiocorreo:" + usuario.id) || "null");
+
+            if (!guardado || guardado.correo !== correoNuevo.toLowerCase() ||
+                guardado.codigo !== String(codigo).trim() || Date.now() > guardado.expira) {
+                throw new Error("El código no es correcto o ya venció");
+            }
+
+            const u = (await todosLosUsuarios()).find(x => x.id === usuario.id);
+            u.email = guardado.correo;
+            await transaccion(["usuarios"], "readwrite", t => t.usuarios.put(u));
+
+            localStorage.removeItem("cambiocorreo:" + usuario.id);
+            return aPerfil(u);
         },
 
         async actualizarPerfil(id, { nombre, foto }) {
@@ -540,7 +633,7 @@ function crearDatosSupabase() {
 
         /* devuelve null si Supabase pide confirmar el correo antes de entrar */
         async registrar(email, nombre, clave) {
-            const { data, error } = await sb.auth.signUp({ email: email, password: clave, options: { data: { nombre: nombre } } });
+            const { data, error } = await sb.auth.signUp({ email: email, password: clave, options: { data: { nombre: nombre, terminos_aceptados: VERSION_TERMINOS } } });
 
             if (error) {
                 if (error.message.includes("Database error")) throw new Error("Ese nombre ya está en uso");
@@ -557,6 +650,56 @@ function crearDatosSupabase() {
 
         async salir() {
             await sb.auth.signOut();
+        },
+
+        /* cambiar la contraseña pide la actual: se comprueba entrando de nuevo */
+        async cambiarClave(usuario, claveActual, claveNueva) {
+            const { error: errorActual } = await sb.auth.signInWithPassword({ email: usuario.email, password: claveActual });
+            if (errorActual) throw new Error("La contraseña actual no es correcta");
+
+            const { error } = await sb.auth.updateUser({ password: claveNueva });
+            if (error) throw new Error(traducirErrorAuth(error));
+        },
+
+        /* Supabase manda el código al correo (hay que poner {{ .Token }} en la plantilla "Reset password").
+           Por seguridad responde igual si el correo existe o no. */
+        async pedirCodigoRecuperacion(email) {
+            const { error } = await sb.auth.resetPasswordForEmail(email.trim());
+            if (error) throw new Error(traducirErrorAuth(error));
+            return {};
+        },
+
+        /* con el código se entra a la cuenta y se pone la contraseña nueva */
+        async recuperarConCodigo(email, codigo, claveNueva) {
+            const { data, error } = await sb.auth.verifyOtp({ email: email.trim(), token: String(codigo).trim(), type: "recovery" });
+            if (error) throw new Error(traducirErrorAuth(error));
+
+            const { error: errorClave } = await sb.auth.updateUser({ password: claveNueva });
+            if (errorClave) {
+                await sb.auth.signOut();
+                throw new Error(traducirErrorAuth(errorClave));
+            }
+
+            return aPerfil(data.user);
+        },
+
+        /* cambiar el correo pide la contraseña y manda un código al correo nuevo
+           (plantilla "Change email address" con {{ .Token }}, y "Secure email change" desactivado) */
+        async cambiarCorreo(usuario, claveActual, correoNuevo) {
+            const { error: errorActual } = await sb.auth.signInWithPassword({ email: usuario.email, password: claveActual });
+            if (errorActual) throw new Error("La contraseña actual no es correcta");
+
+            const { error } = await sb.auth.updateUser({ email: correoNuevo.trim() });
+            if (error) throw new Error(traducirErrorAuth(error));
+            return {};
+        },
+
+        async confirmarCorreo(usuario, correoNuevo, codigo) {
+            const { error } = await sb.auth.verifyOtp({ email: correoNuevo.trim(), token: String(codigo).trim(), type: "email_change" });
+            if (error) throw new Error(traducirErrorAuth(error));
+
+            const { data } = await sb.auth.getUser();
+            return aPerfil(data.user);
         },
 
         async actualizarPerfil(id, { nombre, foto }) {
