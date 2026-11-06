@@ -145,6 +145,15 @@ function AbrirDow() {
     ir("DvFile");
 }
 
+function abrirTerminos() {
+abrir("Terminos");
+}
+
+function cerrarTerminos() {
+   cerrar("Terminos");
+
+   }
+
 /* volver desde el detalle */
 function CerrarDetalle() {
     ir(vistaAnterior);
