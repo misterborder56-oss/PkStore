@@ -127,6 +127,10 @@ panel lateral
                     <span class="menu-icono">◍</span>Páginas
                 </button>
 
+                <button type="button" class="menu-item" data-red data-pantalla="DvMinijuegos" onclick="MinijuegosBtn()">
+                    <span class="menu-icono">◈</span>Mini juegos
+                </button>
+
                 <button type="button" class="menu-item" data-red data-pantalla="DvFile" onclick="AbrirDow()">
                     <span class="menu-icono">＋</span>Publicar
                 </button>
@@ -217,6 +221,18 @@ apks y páginas
                 </section>
 
 <!------------------------------------
+mini juegos
+------------------------------------>
+                <section class="pantalla" id="DvMinijuegos">
+
+                    <h1 class="titulo-pantalla">Mini juegos</h1>
+                    <p class="nota" id="TiempoMinijuegos"></p>
+
+                    <div id="ListaMinijuegos" class="rejilla"></div>
+
+                </section>
+
+<!------------------------------------
 detalle de una apk
 ------------------------------------>
                 <section class="pantalla" id="DvDetalle">
@@ -241,6 +257,14 @@ publicar
                             <button type="button" id="TipoArchivo" class="chip activo" onclick="ElegirTipo('archivo')">apk / archivo</button>
                             <button type="button" id="TipoPagina" class="chip" onclick="ElegirTipo('pagina')">página web (url)</button>
                             <button type="button" id="TipoHtml" class="chip" onclick="ElegirTipo('html')">archivo html</button>
+                        </div>
+
+                        <div id="CampoCategoria" hidden>
+                            <p class="campo-titulo">Categoría</p>
+                            <div class="chips-fila">
+                                <button type="button" id="CatGeneral" class="chip activo" onclick="ElegirCategoria('general')">página o archivo</button>
+                                <button type="button" id="CatMinijuego" class="chip" onclick="ElegirCategoria('minijuego')">mini juego</button>
+                            </div>
                         </div>
 
                         <div id="CampoAcceso">
@@ -359,7 +383,16 @@ cuenta
                         <div class="dato"><strong id="DatoCalificacion">—</strong><span>calificación</span></div>
                         <div class="dato"><strong id="DatoDescargas">0</strong><span>descargas de apks</span></div>
                         <div class="dato"><strong id="DatoVisitas">0</strong><span>visitas a páginas</span></div>
+                        <div class="dato"><strong id="DatoPartidas">0</strong><span>partidas de mini juegos</span></div>
                     </div>
+
+                    <h2 class="seccion">Tu tiempo</h2>
+                    <div class="datos">
+                        <div class="dato"><strong id="TiempoApks">0 min</strong><span>en apks</span></div>
+                        <div class="dato"><strong id="TiempoPaginas">0 min</strong><span>en páginas</span></div>
+                        <div class="dato"><strong id="TiempoJuegos">0 min</strong><span>en mini juegos</span></div>
+                    </div>
+                    <p class="nota">El tiempo cuenta mientras usas cada sección. En los mini juegos no cuenta mientras estás en pausa.</p>
 
                     <h2 class="seccion">Mis publicaciones</h2>
                     <div id="MisApks" class="rejilla"></div>
@@ -387,10 +420,10 @@ ajustes
 <!------------------------------------
 temas
 ------------------------------------>
-                    <div class="ajuste-fila">
-                        <span>Tema claro u oscuro</span>
-                        <button type="button" id="Cambiar" class="btn chico" aria-label="cambiar tema" onclick="Estilo()">☪︎</button>
-                    </div>
+                    <h2 class="seccion">Tema</h2>
+                    <div id="ListaTemas" class="temas"></div>
+
+                    <h2 class="seccion">General</h2>
 
                     <div class="ajuste-fila">
                         <div class="ajuste-texto">
@@ -490,16 +523,30 @@ visualizador html en pantalla completa
             <div class="visor-barra">
                 <button type="button" class="btn chico" onclick="CerrarVisor()">← salir</button>
                 <strong id="VisorTitulo" class="visor-titulo"></strong>
+                <span id="VisorTiempo" class="visor-tiempo" title="tiempo de esta partida (sin contar la pausa)">0:00</span>
+                <button type="button" id="BtnPausa" class="btn chico" aria-label="pausa" onclick="AlternarPausa()">⏸ Pausa</button>
                 <button type="button" class="icono-btn" aria-label="pantalla completa" onclick="AlternarPantallaCompleta()">⛶</button>
             </div>
 
-            <iframe
-                id="VisorMarco"
-                class="visor-marco"
-                title="visualizador html"
-                sandbox="allow-scripts allow-forms allow-popups allow-modals"
-                referrerpolicy="no-referrer"
-            ></iframe>
+            <div class="visor-zona">
+                <iframe
+                    id="VisorMarco"
+                    class="visor-marco"
+                    title="visualizador html"
+                    sandbox="allow-scripts allow-forms allow-popups allow-modals"
+                    referrerpolicy="no-referrer"
+                ></iframe>
+
+                <div id="VisorPausa" class="visor-pausa" hidden>
+                    <div class="visor-pausa-caja">
+                        <h2>En pausa</h2>
+                        <button type="button" class="btn azul chico" onclick="AlternarPausa()">▶ Seguir</button>
+                        <button type="button" class="btn chico" onclick="ReiniciarVisor()">↻ Reiniciar</button>
+                        <button type="button" class="btn chico" onclick="AlternarPantallaCompleta()">⛶ Pantalla completa</button>
+                        <button type="button" class="btn peligro chico" onclick="CerrarVisor()">Salir</button>
+                    </div>
+                </div>
+            </div>
 
         </section>
 
