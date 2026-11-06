@@ -188,6 +188,7 @@ desaparecidos
 ---------------------------------- */
 #DvRegister,
 #DvLogin,
+#DvRecuperar,
 #Shell,
 .pantalla,
 .input.imagen {
@@ -1659,30 +1660,66 @@ selector de temas (ajustes)
 }
 
 /* ----------------------------------
-accesibilidad
+seguridad de la cuenta
 ---------------------------------- */
-.btn:focus-visible,
-.chip:focus-visible,
-.menu-item:focus-visible,
-.icono-btn:focus-visible,
-.tarjeta-app:focus-visible,
-.mini-fila:focus-visible,
-.apk-borrar:focus-visible,
-.avatar:focus-visible,
-.tema-opcion:focus-visible,
-.subida:focus-within {
-    outline: 2px solid var(--azul);
-    outline-offset: 2px;
+.panel-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
 }
 
-@media (prefers-reduced-motion: reduce) {
-    * {
-        transition: none !important;
-    }
+.panel-form h3 {
+    margin: 0;
 }
 
+.panel-form .input {
+    width: 100%;
+    margin: 0;
+}
 
+.panel-form .btn.chico {
+    align-self: flex-start;
+}
 
+/* casilla de aceptar los términos (registro) */
+.acepto {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin: 6px 12px 10px;
+    color: var(--texto);
+    font-size: 0.9rem;
+    text-align: left;
+}
+
+.acepto input {
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    accent-color: var(--azul);
+}
+
+.enlace-texto {
+    padding: 0;
+    border: none;
+    background: none;
+    color: var(--azul);
+    font: inherit;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+/* ----------------------------------
+términos y condiciones (ventana)
+---------------------------------- */
+.terminos-fondo {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 9998;
+    background: rgba(0, 0, 0, 0.6);
+}
 
 .Terminos {
     display: none;
@@ -1698,14 +1735,14 @@ accesibilidad
     height: 85%;
     max-height: 750px;
 
-    background: rgb(19, 22, 30);
-    color: white;
+    background: var(--caja);
+    color: var(--input-texto);
 
-    border: 1px solid rgb(58, 63, 76);
+    border: 1px solid var(--borde);
     border-radius: 15px;
 
     overflow: hidden;
-    box-shadow: 0 10px 40px rgba(0,0,0,.6);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
 }
 
 .TerminosHeader {
@@ -1716,7 +1753,7 @@ accesibilidad
     align-items: center;
     justify-content: space-between;
 
-    border-bottom: 1px solid rgb(58, 63, 76);
+    border-bottom: 1px solid var(--borde);
 }
 
 .TerminosHeader h2 {
@@ -1725,7 +1762,7 @@ accesibilidad
 
 .TerminosHeader button {
     background: transparent;
-    color: white;
+    color: var(--input-texto);
     border: none;
     font-size: 22px;
     cursor: pointer;
@@ -1746,14 +1783,15 @@ accesibilidad
 }
 
 .TerminosContenido h3 {
-    color: #60a5fa;
+    color: var(--azul);
     font-size: 16px;
     margin-top: 22px;
 }
 
 .TerminosContenido p,
 .TerminosContenido li {
-    color: #cbd5e1;
+    color: var(--input-texto);
+    opacity: 0.88;
     font-size: 14px;
 }
 
@@ -1763,13 +1801,13 @@ accesibilidad
 
 .TerminosContenido hr {
     border: none;
-    border-top: 1px solid rgb(58, 63, 76);
+    border-top: 1px solid var(--borde);
     margin: 20px 0;
 }
 
 .fechaTerminos {
     text-align: center;
-    color: #94a3b8 !important;
+    color: var(--texto) !important;
     font-size: 12px !important;
 }
 
@@ -1787,7 +1825,7 @@ accesibilidad
     padding: 10px 15px;
     box-sizing: border-box;
 
-    border-top: 1px solid rgb(58, 63, 76);
+    border-top: 1px solid var(--borde);
 }
 
 .TerminosFooter button {
@@ -1797,7 +1835,7 @@ accesibilidad
     border: none;
     border-radius: 8px;
 
-    background: #2563eb;
+    background: var(--azul);
     color: white;
 
     font-size: 15px;
@@ -1805,25 +1843,22 @@ accesibilidad
 }
 
 .TerminosFooter button:hover {
-    background: #1d4ed8;
+    filter: brightness(0.9);
 }
 
-/* BARRA DE DESPLAZAMIENTO */
-
+/* barra de desplazamiento */
 .TerminosContenido::-webkit-scrollbar {
     width: 6px;
 }
 
 .TerminosContenido::-webkit-scrollbar-thumb {
-    background: #475569;
+    background: var(--borde);
     border-radius: 10px;
 }
 
 .TerminosContenido::-webkit-scrollbar-track {
     background: transparent;
 }
-
-/* MOVIL */
 
 @media (max-width: 500px) {
     .Terminos {
@@ -1837,5 +1872,28 @@ accesibilidad
 
     .TerminosContenido {
         padding: 12px;
+    }
+}
+
+/* ----------------------------------
+accesibilidad
+---------------------------------- */
+.btn:focus-visible,
+.chip:focus-visible,
+.menu-item:focus-visible,
+.icono-btn:focus-visible,
+.tarjeta-app:focus-visible,
+.mini-fila:focus-visible,
+.apk-borrar:focus-visible,
+.avatar:focus-visible,
+.tema-opcion:focus-visible,
+.subida:focus-within {
+    outline: 2px solid var(--azul);
+    outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    * {
+        transition: none !important;
     }
 }
