@@ -29,7 +29,7 @@ const PANTALLAS_TIENDA = [
 
 /* CERRAR TODO */
 function ocultarPantallas() {
-    ["DvRegister", "DvLogin", "Shell"].concat(PANTALLAS_TIENDA).forEach(id => cerrar(id));
+    ["DvRegister", "DvLogin", "DvRecuperar", "Shell"].concat(PANTALLAS_TIENDA).forEach(id => cerrar(id));
 }
 
 let pantallaActual = "DvInicio";
@@ -145,15 +145,6 @@ function AbrirDow() {
     ir("DvFile");
 }
 
-function abrirTerminos() {
-abrir("Terminos");
-}
-
-function cerrarTerminos() {
-   cerrar("Terminos");
-
-   }
-
 /* volver desde el detalle */
 function CerrarDetalle() {
     ir(vistaAnterior);
@@ -167,6 +158,14 @@ function AbrirLogin() {
 
 function AbrirRegistro() {
     ir("DvRegister");
+}
+
+function AbrirRecuperar() {
+    document.getElementById("RecEmail").value = document.getElementById("Inpemail").value;
+    ["RecCodigo", "RecClave", "RecClave2"].forEach(id => { document.getElementById(id).value = ""; });
+    document.getElementById("RecPaso1").hidden = false;
+    document.getElementById("RecPaso2").hidden = true;
+    ir("DvRecuperar");
 }
 
 /* cuenta */
@@ -430,6 +429,11 @@ async function RegistrarBtn() {
         return;
     }
 
+    if (!document.getElementById("AceptoTerminos").checked) {
+        alert("Debes aceptar los términos y condiciones para registrarte");
+        return;
+    }
+
     try {
         let perfil = await Datos.registrar(correo, nombre, Contrasena);
 
@@ -482,6 +486,7 @@ let fotoNueva = null;
 /* foto, nombre, números y publicaciones propias */
 async function mostrarCuenta() {
     fotoNueva = null;
+    reiniciarSeguridad();
 
     document.getElementById("InpCuentaNombre").value = usuario.nombre;
     document.getElementById("CuentaCorreo").textContent = usuario.email;
@@ -1435,6 +1440,12 @@ function CerrarLightbox() {
 document.addEventListener("keydown", evento => {
     if (evento.key !== "Escape") return;
 
+    /* si los términos están abiertos, Esc solo los cierra */
+    if (document.getElementById("Terminos").style.display === "block") {
+        cerrarTerminos();
+        return;
+    }
+
     CerrarLightbox();
 
     /* con un juego abierto, Esc pausa o sigue */
@@ -2310,11 +2321,238 @@ window.addEventListener("beforeunload", evento => {
 
 
 //////////////////////////////
+//Seguridad de la cuenta
+//////////////////////////////
+
+/* devuelve el problema de la contraseña nueva, o null si está bien */
+function problemaClaveNueva(nueva, repetida) {
+    if (nueva.length < 8) return "La contraseña nueva debe tener al menos 8 caracteres";
+    if (nueva !== repetida) return "Las contraseñas nuevas no coinciden";
+    return null;
+}
+
+/* en modo local no hay correo: el código aparece en pantalla (solo para probar) */
+function avisarCodigoLocal(respuesta) {
+    if (respuesta && respuesta.demo) alert("Modo sin correo: tu código es " + respuesta.demo);
+}
+
+function valorDe(id) {
+    return document.getElementById(id).value;
+}
+
+/* ---------- recuperar desde el login ---------- */
+async function RecuperarEnviarBtn() {
+    let correo = valorDe("RecEmail").trim();
+
+    if (!correo) {
+        alert("Escribe tu correo");
+        return;
+    }
+
+    try {
+        avisarCodigoLocal(await Datos.pedirCodigoRecuperacion(correo));
+
+        document.getElementById("RecAviso").textContent =
+            "Si el correo está registrado, te enviamos un código. Revisa también la carpeta de spam.";
+        document.getElementById("RecPaso1").hidden = true;
+        document.getElementById("RecPaso2").hidden = false;
+    } catch (error) {
+        alert(error.message);
+    }
+}
+
+async function RecuperarCambiarBtn() {
+    let correo = valorDe("RecEmail").trim();
+    let codigo = valorDe("RecCodigo").trim();
+    let clave = valorDe("RecClave");
+    let problema = problemaClaveNueva(clave, valorDe("RecClave2"));
+    let boton = document.getElementById("BtnRecCambiar");
+
+    if (!codigo) {
+        alert("Escribe el código que te llegó al correo");
+        return;
+    }
+
+    if (problema) {
+        alert(problema);
+        return;
+    }
+
+    boton.disabled = true;
+
+    try {
+        let perfil = await Datos.recuperarConCodigo(correo, codigo, clave);
+
+        alert("Contraseña cambiada. Ya entraste a tu cuenta.");
+        iniciarSesion(perfil);
+    } catch (error) {
+        alert(error.message);
+    }
+
+    boton.disabled = false;
+}
+
+/* ---------- cambiar la contraseña desde Mi cuenta ---------- */
+let modoClave = "actual";
+let correoPendiente = null;
+
+/* con la contraseña actual o con un código enviado al correo */
+function ElegirModoClave(modo) {
+    modoClave = modo;
+
+    document.getElementById("ClaveModoActual").classList.toggle("activo", modo === "actual");
+    document.getElementById("ClaveModoCodigo").classList.toggle("activo", modo === "codigo");
+    document.getElementById("CampoClaveActual").hidden = modo !== "actual";
+    document.getElementById("CampoClaveCodigo").hidden = modo !== "codigo";
+}
+
+/* deja los campos de seguridad vacíos cada vez que abres Mi cuenta */
+function reiniciarSeguridad() {
+    ["ClaveActual", "ClaveCodigo", "ClaveNueva", "ClaveNueva2", "CorreoNuevo", "ClaveParaCorreo", "CodigoCorreo"]
+        .forEach(id => { document.getElementById(id).value = ""; });
+
+    ElegirModoClave("actual");
+    CancelarCorreoBtn();
+}
+
+async function EnviarCodigoClaveBtn() {
+    try {
+        avisarCodigoLocal(await Datos.pedirCodigoRecuperacion(usuario.email));
+        alert("Te enviamos un código a " + usuario.email);
+    } catch (error) {
+        alert(error.message);
+    }
+}
+
+async function CambiarClaveBtn() {
+    let nueva = valorDe("ClaveNueva");
+    let problema = problemaClaveNueva(nueva, valorDe("ClaveNueva2"));
+    let boton = document.getElementById("BtnCambiarClave");
+
+    if (modoClave === "actual" && !valorDe("ClaveActual")) {
+        alert("Escribe tu contraseña actual");
+        return;
+    }
+
+    if (modoClave === "codigo" && !valorDe("ClaveCodigo").trim()) {
+        alert("Escribe el código que te llegó al correo");
+        return;
+    }
+
+    if (problema) {
+        alert(problema);
+        return;
+    }
+
+    boton.disabled = true;
+
+    try {
+        if (modoClave === "actual") {
+            await Datos.cambiarClave(usuario, valorDe("ClaveActual"), nueva);
+        } else {
+            usuario = await Datos.recuperarConCodigo(usuario.email, valorDe("ClaveCodigo"), nueva);
+        }
+
+        alert("Contraseña cambiada");
+        reiniciarSeguridad();
+    } catch (error) {
+        alert(error.message);
+    }
+
+    boton.disabled = false;
+}
+
+/* ---------- cambiar el correo ---------- */
+async function EnviarCodigoCorreoBtn() {
+    let nuevo = valorDe("CorreoNuevo").trim();
+    let clave = valorDe("ClaveParaCorreo");
+    let boton = document.getElementById("BtnEnviarCorreo");
+
+    if (!nuevo || !clave) {
+        alert("Escribe el correo nuevo y tu contraseña actual");
+        return;
+    }
+
+    if (nuevo.toLowerCase() === usuario.email.toLowerCase()) {
+        alert("Ese ya es tu correo");
+        return;
+    }
+
+    boton.disabled = true;
+
+    try {
+        avisarCodigoLocal(await Datos.cambiarCorreo(usuario, clave, nuevo));
+
+        correoPendiente = nuevo;
+        document.getElementById("CorreoAviso").textContent = "Te enviamos un código a " + nuevo + ". Escríbelo para confirmar.";
+        document.getElementById("CorreoPaso1").hidden = true;
+        document.getElementById("CorreoPaso2").hidden = false;
+        document.getElementById("ClaveParaCorreo").value = "";
+    } catch (error) {
+        alert(error.message);
+    }
+
+    boton.disabled = false;
+}
+
+async function ConfirmarCorreoBtn() {
+    let codigo = valorDe("CodigoCorreo").trim();
+
+    if (!codigo) {
+        alert("Escribe el código que te llegó al correo nuevo");
+        return;
+    }
+
+    
+    try {
+        usuario = await Datos.confirmarCorreo(usuario, correoPendiente, codigo);
+
+        actualizarMenuUsuario();
+        alert("Correo cambiado. Ahora entras con " + usuario.email);
+        mostrarCuenta();
+    } catch (error) {
+        alert(error.message);
+    }
+}
+
+function CancelarCorreoBtn() {
+    correoPendiente = null;
+    document.getElementById("CodigoCorreo").value = "";
+    document.getElementById("CorreoPaso1").hidden = false;
+    document.getElementById("CorreoPaso2").hidden = true;
+}
+
+
+//////////////////////////////
+//Términos y condiciones
+//////////////////////////////
+function abrirTerminos() {
+    document.getElementById("TerminosContenido").scrollTop = 0;
+    abrir("TerminosFondo");
+    abrir("Terminos");
+}
+
+function cerrarTerminos() {
+    cerrar("Terminos");
+    cerrar("TerminosFondo");
+}
+
+
+//////////////////////////////
 //Actualizaciones de la página
 //////////////////////////////
 
 /* agrega una versión nueva arriba cada vez que cambies la página */
 const ACTUALIZACIONES = [
+    {
+        version: "2.5",
+        fecha: "2026-11-06",
+        cambios: [
+            "Términos y condiciones: casilla al registrarte y acceso desde Ajustes",
+            "En Mi cuenta puedes cambiar tu contraseña (con la actual o con un código al correo) y tu correo",
+            "En el login: olvidé mi contraseña, con un código enviado al correo"
+        ]
+    },
     {
         version: "2.4",
         fecha: "2026-11-06",
