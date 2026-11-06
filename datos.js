@@ -204,6 +204,7 @@ function crearDatosLocal() {
                     nombre: a.nombre,
                     descripcion: a.descripcion || "",
                     tipo: a.tipo || "archivo",
+                    categoria: a.categoria || "general",
                     acceso: a.acceso || "libre",
                     url: a.url || null,
                     nombreArchivo: a.nombreArchivo || "",
@@ -220,12 +221,13 @@ function crearDatosLocal() {
         },
 
         /* con acceso "codigo" se crean los 50 códigos de un solo uso */
-        async publicar(usuario, { nombre, descripcion, tipo, url, archivo, imagen, capturas, video, acceso }) {
+        async publicar(usuario, { nombre, descripcion, tipo, categoria, url, archivo, imagen, capturas, video, acceso }) {
             await transaccion(["apks", "codigos"], "readwrite", t => {
                 const pedido = t.apks.add({
                     nombre: nombre,
                     descripcion: descripcion,
                     tipo: tipo,
+                    categoria: tipo === "html" && categoria === "minijuego" ? "minijuego" : "general",
                     acceso: tipo === "archivo" ? (acceso || "libre") : "libre",
                     url: url || null,
                     autorId: usuario.id,
@@ -416,6 +418,20 @@ function crearDatosLocal() {
             if (error) throw new Error(error);
         },
 
+        /* ---------- tiempo de uso ---------- */
+        async sumarTiempo(usuario, categoria, segundos) {
+            const clave = "tiempo:" + usuario.id;
+            const total = JSON.parse(localStorage.getItem(clave) || "{}");
+
+            total[categoria] = (total[categoria] || 0) + Math.max(0, Math.min(segundos, 600));
+            localStorage.setItem(clave, JSON.stringify(total));
+        },
+
+        async misTiempos(usuario) {
+            const total = JSON.parse(localStorage.getItem("tiempo:" + usuario.id) || "{}");
+            return { apks: total.apks || 0, paginas: total.paginas || 0, minijuegos: total.minijuegos || 0 };
+        },
+
         /* ---------- calificaciones ---------- */
         async calificar(usuario, apkId, puntos) {
             await transaccion(["votos"], "readwrite", t => t.votos.put({
@@ -488,7 +504,18 @@ function crearDatosSupabase() {
 
     async function subir(bucket, ruta, archivo) {
         const { error } = await sb.storage.from(bucket).upload(ruta, archivo, { contentType: archivo.type || undefined });
-        if (error) throw new Error(error.message);
+        if (!error) return;
+
+        /* el mensaje de seguridad de Supabase no dice qué falló: aquí se aclara */
+        if (/row-level security/i.test(error.message)) {
+            const { data } = await sb.auth.getSession();
+
+            if (!data.session) throw new Error("Tu sesión venció. Cierra sesión y vuelve a entrar.");
+            throw new Error("Supabase no te deja subir archivos a «" + bucket + "». " +
+                "Ejecuta la sección «ARREGLO DE ALMACENAMIENTO» de supabase-v2.sql.");
+        }
+
+        throw new Error(error.message);
     }
 
     async function aPerfil(user) {
@@ -563,6 +590,7 @@ function crearDatosSupabase() {
                 nombre: a.nombre,
                 descripcion: a.descripcion || "",
                 tipo: a.tipo,
+                categoria: a.categoria || "general",
                 acceso: a.acceso || "libre",
                 url: a.url,
                 nombreArchivo: a.nombre_archivo || "",
@@ -578,7 +606,7 @@ function crearDatosSupabase() {
         },
 
         /* con acceso "codigo" el archivo va a un lugar privado y el servidor crea los 50 códigos */
-        async publicar(usuario, { nombre, descripcion, tipo, url, archivo, imagen, capturas, video, acceso }) {
+        async publicar(usuario, { nombre, descripcion, tipo, categoria, url, archivo, imagen, capturas, video, acceso }) {
             const base = usuario.id + "/" + Date.now();
             const protegido = tipo === "archivo" && acceso === "codigo";
             const rutasCapturas = [];
@@ -613,6 +641,7 @@ function crearDatosSupabase() {
                 nombre: nombre,
                 descripcion: descripcion,
                 tipo: tipo,
+                categoria: tipo === "html" && categoria === "minijuego" ? "minijuego" : "general",
                 acceso: tipo === "archivo" ? (acceso || "libre") : "libre",
                 url: url || null,
                 archivo_path: archivoPath,
@@ -734,6 +763,19 @@ function crearDatosSupabase() {
 
         async desactivarEnlace(usuario, apkId) {
             ok(await sb.rpc("devolver_codigo", { p_apk: apkId }));
+        },
+
+        /* ---------- tiempo de uso ---------- */
+        async sumarTiempo(usuario, categoria, segundos) {
+            ok(await sb.rpc("sumar_tiempo", { p_categoria: categoria, p_segundos: Math.round(segundos) }));
+        },
+
+        async misTiempos(usuario) {
+            const filas = ok(await sb.from("tiempos").select("categoria, segundos").eq("usuario_id", usuario.id));
+            const total = { apks: 0, paginas: 0, minijuegos: 0 };
+
+            filas.forEach(f => { total[f.categoria] = Number(f.segundos); });
+            return total;
         },
 
         /* ---------- calificaciones ---------- */
