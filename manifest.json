@@ -1,16 +1,50 @@
 {
+    "id": "./",
     "name": "PkStore",
     "short_name": "PkStore",
-    "description": "Publica y descarga aplicaciones y páginas",
+    "description": "Descubre, publica y descarga apps, páginas web y mini juegos.",
     "lang": "es",
-    "start_url": "./index.html",
+    "dir": "ltr",
+    "start_url": "./",
     "scope": "./",
     "display": "fullscreen",
-    "orientation": "portrait",
+    "display_override": ["fullscreen", "standalone"],
+    "orientation": "any",
     "background_color": "#121318",
     "theme_color": "#121318",
+    "categories": ["games", "entertainment", "utilities"],
+    "prefer_related_applications": false,
     "icons": [
-        { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
-        { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+        { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+        { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+        { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+        { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    ],
+    "shortcuts": [
+        {
+            "name": "Mini juegos",
+            "short_name": "Juegos",
+            "description": "Abrir la sección de mini juegos",
+            "url": "./?atajo=minijuegos",
+            "icons": [{ "src": "icon-192.png", "sizes": "192x192", "type": "image/png" }]
+        },
+        {
+            "name": "Publicar",
+            "description": "Publicar una app, página o juego",
+            "url": "./?atajo=publicar",
+            "icons": [{ "src": "icon-192.png", "sizes": "192x192", "type": "image/png" }]
+        },
+        {
+            "name": "Descargas",
+            "description": "Ver lo que guardaste en el dispositivo",
+            "url": "./?atajo=descargas",
+            "icons": [{ "src": "icon-192.png", "sizes": "192x192", "type": "image/png" }]
+        },
+        {
+            "name": "Soporte",
+            "description": "Preguntas frecuentes y mensajes al equipo",
+            "url": "./?atajo=soporte",
+            "icons": [{ "src": "icon-192.png", "sizes": "192x192", "type": "image/png" }]
+        }
     ]
 }
