@@ -264,6 +264,20 @@ function crearDatosLocal() {
             return aPerfil(u);
         },
 
+        /* ---------- soporte ---------- */
+        /* en modo local el mensaje solo se guarda en este dispositivo */
+        async enviarSoporte(usuario, { tipo, asunto, mensaje }) {
+            const clave = "soporte:" + usuario.id;
+            const lista = JSON.parse(localStorage.getItem(clave) || "[]");
+
+            lista.push({ id: Date.now(), tipo: tipo, asunto: asunto, mensaje: mensaje, estado: "abierto", respuesta: null, creado: Date.now() });
+            localStorage.setItem(clave, JSON.stringify(lista));
+        },
+
+        async misSoportes(usuario) {
+            return JSON.parse(localStorage.getItem("soporte:" + usuario.id) || "[]").reverse();
+        },
+
         async actualizarPerfil(id, { nombre, foto }) {
             const usuarios = await todosLosUsuarios();
             const u = usuarios.find(x => x.id === id);
@@ -700,6 +714,19 @@ function crearDatosSupabase() {
 
             const { data } = await sb.auth.getUser();
             return aPerfil(data.user);
+        },
+
+        /* ---------- soporte ---------- */
+        /* quien administra responde desde el panel de Supabase (columnas respuesta y estado) */
+        async enviarSoporte(usuario, { tipo, asunto, mensaje }) {
+            ok(await sb.from("soporte").insert({ usuario_id: usuario.id, tipo: tipo, asunto: asunto, mensaje: mensaje }));
+        },
+
+        async misSoportes(usuario) {
+            const filas = ok(await sb.from("soporte").select("id, tipo, asunto, mensaje, estado, respuesta, creado")
+                .eq("usuario_id", usuario.id).order("creado", { ascending: false }));
+
+            return filas.map(f => Object.assign({}, f, { creado: new Date(f.creado).getTime() }));
         },
 
         async actualizarPerfil(id, { nombre, foto }) {
