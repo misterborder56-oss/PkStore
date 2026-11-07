@@ -22,6 +22,8 @@ const PANTALLAS_TIENDA = [
     "DvCuenta",
     "DvActualizaciones",
     "DvAjustes",
+    "DvSeguridad",
+    "DvSoporte",
     "DvDescargas",
     "DvEditor",
     "DvVisor"
@@ -65,7 +67,7 @@ function marcarMenu(id) {
     if (id === "DvDetalle" || id === "DvVisor" || id === "DvEditor") return;
 
     document.querySelectorAll(".menu-item").forEach(item => {
-        let activo = item.dataset.pantalla === id &&
+        let activo = item.dataset.pantalla === (id === "DvSeguridad" ? "DvAjustes" : id) &&
             (!item.dataset.filtro || item.dataset.filtro === filtroTipo);
         item.classList.toggle("activo", activo);
     });
@@ -137,7 +139,9 @@ function DescargasBtn() {
 /* ajuste */
 function OpcBtn() {
     ir("DvAjustes");
+    aplicarAjustes();
     mostrarCarpeta();
+    mostrarAlmacenamiento();
 }
 
 /* publicar */
@@ -486,7 +490,6 @@ let fotoNueva = null;
 /* foto, nombre, números y publicaciones propias */
 async function mostrarCuenta() {
     fotoNueva = null;
-    reiniciarSeguridad();
 
     document.getElementById("InpCuentaNombre").value = usuario.nombre;
     document.getElementById("CuentaCorreo").textContent = usuario.email;
@@ -1071,6 +1074,17 @@ function pintarDetalle(apk, datos) {
         informacion.append(fila);
     }
     lado.append(informacion);
+
+    /* cualquiera puede avisar si algo está mal (menos quien lo publicó) */
+    if (!propia) {
+        let aviso = crear("div", "panel panel-form");
+        aviso.append(
+            crear("h3", "", "¿Algo está mal?"),
+            crear("p", "nota", "Avísanos si esta publicación es peligrosa, engañosa o rompe las reglas."),
+            crearBoton("Reportar publicación", "btn chico", () => ReportarBtn(apk))
+        );
+        lado.append(aviso);
+    }
 
     let masDelAutor = apksCache.filter(a => a.autorId === apk.autorId && a.id !== apk.id).slice(0, 5);
     if (masDelAutor.length) {
@@ -1802,8 +1816,11 @@ function prepararHtml(html) {
 }
 
 /* pantalla completa del dispositivo (algunos navegadores no la permiten: igual se ve a todo el ancho) */
-function pedirPantallaCompleta() {
+function pedirPantallaCompleta(forzar) {
     let raiz = document.documentElement;
+
+    /* el ajuste "abrir en pantalla completa" solo cuenta cuando se abre solo, no cuando tocas el botón */
+    if (!forzar && !ajustes.pantallaCompleta) return;
 
     if (!document.fullscreenElement && raiz.requestFullscreen) {
         raiz.requestFullscreen().catch(() => console.log("sin pantalla completa"));
@@ -1812,7 +1829,7 @@ function pedirPantallaCompleta() {
 
 function AlternarPantallaCompleta() {
     if (document.fullscreenElement) document.exitFullscreen();
-    else pedirPantallaCompleta();
+    else pedirPantallaCompleta(true);
 }
 
 /* reloj de la partida (no avanza en pausa) */
@@ -2065,7 +2082,7 @@ setInterval(() => {
 document.addEventListener("visibilitychange", () => {
     if (document.hidden) {
         /* si sales de la pestaña con un juego abierto, se pausa solo */
-        if (pantallaMostrada === "DvVisor") pausarVisor();
+        if (pantallaMostrada === "DvVisor" && ajustes.pausaAutomatica) pausarVisor();
 
         guardarPendiente();
         enviarTiempo();
@@ -2503,13 +2520,13 @@ async function ConfirmarCorreoBtn() {
         return;
     }
 
-    
     try {
         usuario = await Datos.confirmarCorreo(usuario, correoPendiente, codigo);
 
         actualizarMenuUsuario();
         alert("Correo cambiado. Ahora entras con " + usuario.email);
-        mostrarCuenta();
+        reiniciarSeguridad();
+        mostrarSegCorreo();
     } catch (error) {
         alert(error.message);
     }
@@ -2539,11 +2556,286 @@ function cerrarTerminos() {
 
 
 //////////////////////////////
+//Ajustes
+//////////////////////////////
+const AJUSTES_BASE = { texto: "normal", sinAnimaciones: false, pausaAutomatica: true, pantallaCompleta: true };
+
+let ajustes = Object.assign({}, AJUSTES_BASE, JSON.parse(localStorage.getItem("ajustes") || "{}"));
+
+function guardarAjustes() {
+    localStorage.setItem("ajustes", JSON.stringify(ajustes));
+}
+
+/* pone en pantalla lo que dicen los ajustes */
+function aplicarAjustes() {
+    let cuerpo = document.getElementById("body");
+    let zoom = { pequeno: "0.9", normal: "1", grande: "1.15" }[ajustes.texto] || "1";
+
+    cuerpo.style.zoom = zoom;
+    cuerpo.classList.toggle("sin-animaciones", ajustes.sinAnimaciones);
+
+    [["SwSinAnimaciones", "sinAnimaciones"], ["SwPausaAuto", "pausaAutomatica"], ["SwPantallaCompleta", "pantallaCompleta"]]
+        .forEach(([id, clave]) => document.getElementById(id).setAttribute("aria-checked", String(ajustes[clave])));
+
+    ["pequeno", "normal", "grande"].forEach(tamano => {
+        let id = "Texto" + tamano.charAt(0).toUpperCase() + tamano.slice(1);
+        document.getElementById(id).classList.toggle("activo", ajustes.texto === tamano);
+    });
+}
+
+function AlternarAjuste(clave) {
+    ajustes[clave] = !ajustes[clave];
+    guardarAjustes();
+    aplicarAjustes();
+}
+
+function ElegirTexto(tamano) {
+    ajustes.texto = tamano;
+    guardarAjustes();
+    aplicarAjustes();
+}
+
+/* cuánto espacio usa PkStore en este dispositivo */
+async function mostrarAlmacenamiento() {
+    let texto = document.getElementById("AlmacenUso");
+
+    if (!(navigator.storage && navigator.storage.estimate)) {
+        texto.textContent = "tu navegador no lo informa";
+        return;
+    }
+
+    let { usage, quota } = await navigator.storage.estimate();
+    let mb = numero => (numero / 1048576).toFixed(1) + " MB";
+
+    texto.textContent = mb(usage || 0) + " usados de " + mb(quota || 0);
+}
+
+/* borra las páginas html guardadas para usar sin internet (la lista de apks se queda) */
+async function BorrarCopiasBtn() {
+    if (!confirm("¿Borrar las páginas guardadas para usar sin internet? Podrás descargarlas otra vez.")) return;
+
+    let guardados = await leerOffline();
+
+    for (let item of guardados.filter(i => i.tipo !== "archivo")) {
+        await borrarOffline(item.clave);
+    }
+
+    mostrarAlmacenamiento();
+    alert("Listo, copias borradas");
+}
+
+/* vacía la copia guardada de la app y la vuelve a cargar con lo más nuevo */
+async function BuscarActualizacionBtn() {
+    if (!navigator.onLine) {
+        alert("Necesitas internet para buscar actualizaciones");
+        return;
+    }
+
+    if (!confirm("Se recargará la app con la versión más nueva. Tu cuenta y tus descargas no se borran. ¿Continuar?")) return;
+
+    try {
+        if ("serviceWorker" in navigator) {
+            let registros = await navigator.serviceWorker.getRegistrations();
+            await Promise.all(registros.map(registro => registro.update()));
+        }
+
+        let claves = await caches.keys();
+        await Promise.all(claves.map(clave => caches.delete(clave)));
+    } catch (error) {
+        console.log("no se pudo limpiar la copia guardada", error);
+    }
+
+    location.reload();
+}
+
+/* tus datos en un archivo, para que los tengas */
+async function DescargarDatosBtn() {
+    try {
+        let apks = await Datos.listarApks();
+        let mias = apks.filter(a => a.autorId === usuario.id);
+        let tiempos = await tiemposActuales();
+
+        let datos = {
+            generado: new Date().toISOString(),
+            cuenta: { nombre: usuario.nombre, correo: usuario.email },
+            tiempo_en_segundos: tiempos,
+            publicaciones: mias.map(a => ({
+                nombre: a.nombre,
+                tipo: a.tipo,
+                categoria: a.categoria,
+                descripcion: a.descripcion,
+                publicada: new Date(a.fecha).toISOString(),
+                descargas_o_visitas: a.descargas,
+                calificacion: a.promedio,
+                votos: a.votos
+            })),
+            ajustes: ajustes
+        };
+
+        let enlace = document.createElement("a");
+        let url = URL.createObjectURL(new Blob([JSON.stringify(datos, null, 2)], { type: "application/json" }));
+
+        enlace.href = url;
+        enlace.download = "pkstore-mis-datos.json";
+        document.body.append(enlace);
+        enlace.click();
+        enlace.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 5000);
+    } catch (error) {
+        alert("No se pudieron descargar tus datos: " + error.message);
+    }
+}
+
+
+//////////////////////////////
+//Seguridad (pantalla dentro de Ajustes)
+//////////////////////////////
+function mostrarSegCorreo() {
+    document.getElementById("SegCorreo").textContent = "Cuenta: " + usuario.email;
+}
+
+function AbrirSeguridad() {
+    ir("DvSeguridad");
+    reiniciarSeguridad();
+    mostrarSegCorreo();
+}
+
+
+//////////////////////////////
+//Soporte
+//////////////////////////////
+const TIPOS_SOPORTE = {
+    problema: "SoporteProblema",
+    sugerencia: "SoporteSugerencia",
+    reporte: "SoporteReporte",
+    cuenta: "SoporteCuenta"
+};
+
+const NOMBRES_SOPORTE = { problema: "Problema", sugerencia: "Sugerencia", reporte: "Reporte", cuenta: "Mi cuenta" };
+const ESTADOS_SOPORTE = { abierto: "en revisión", respondido: "respondido", cerrado: "cerrado" };
+
+let tipoSoporte = "problema";
+
+function ElegirTipoSoporte(tipo) {
+    tipoSoporte = tipo;
+
+    Object.entries(TIPOS_SOPORTE).forEach(([nombre, id]) => {
+        document.getElementById(id).classList.toggle("activo", nombre === tipo);
+    });
+}
+
+/* "previo" permite abrirlo ya con el tipo, el asunto y el mensaje escritos (por ejemplo al reportar) */
+function AbrirSoporte(previo) {
+    ir("DvSoporte");
+
+    ElegirTipoSoporte(previo && previo.tipo ? previo.tipo : "problema");
+    document.getElementById("SoporteAsunto").value = previo && previo.asunto ? previo.asunto : "";
+    document.getElementById("SoporteMensaje").value = previo && previo.mensaje ? previo.mensaje : "";
+
+    mostrarSoportes();
+}
+
+function ReportarBtn(apk) {
+    AbrirSoporte({
+        tipo: "reporte",
+        asunto: "Reporte: " + apk.nombre,
+        mensaje: "Publicación: " + apk.nombre + " (número " + apk.id + "), de " + apk.autor + ".\nMotivo: "
+    });
+}
+
+async function EnviarSoporteBtn() {
+    let asunto = valorDe("SoporteAsunto").trim();
+    let mensaje = valorDe("SoporteMensaje").trim();
+    let boton = document.getElementById("BtnSoporte");
+
+    if (asunto.length < 3) {
+        alert("Escribe un asunto (mínimo 3 letras)");
+        return;
+    }
+
+    if (mensaje.length < 10) {
+        alert("Cuéntanos un poco más (mínimo 10 letras)");
+        return;
+    }
+
+    boton.disabled = true;
+
+    try {
+        await Datos.enviarSoporte(usuario, { tipo: tipoSoporte, asunto: asunto, mensaje: mensaje });
+
+        document.getElementById("SoporteAsunto").value = "";
+        document.getElementById("SoporteMensaje").value = "";
+
+        alert(Datos.modo === "local"
+            ? "Mensaje guardado en este dispositivo. Sin Supabase conectado no le llega a nadie."
+            : "Mensaje enviado. Aquí abajo verás la respuesta cuando la tengamos.");
+
+        mostrarSoportes();
+    } catch (error) {
+        alert("No se pudo enviar: " + error.message);
+    }
+
+    boton.disabled = false;
+}
+
+/* tus mensajes y las respuestas */
+async function mostrarSoportes() {
+    let lista = document.getElementById("ListaSoporte");
+    let mensajes = [];
+
+    try {
+        mensajes = await Datos.misSoportes(usuario);
+    } catch (error) {
+        console.log("no se pudieron leer los mensajes", error);
+    }
+
+    if (!mensajes.length) {
+        lista.replaceChildren(crear("p", "nota", "Todavía no has enviado mensajes."));
+        return;
+    }
+
+    lista.replaceChildren(...mensajes.map(m => {
+        let ticket = crear("article", "ticket");
+        let cabecera = crear("div", "ticket-cab");
+
+        cabecera.append(
+            crear("strong", "", m.asunto),
+            crear("span", "insignia", ESTADOS_SOPORTE[m.estado] || m.estado)
+        );
+
+        ticket.append(
+            cabecera,
+            crear("small", "nota", NOMBRES_SOPORTE[m.tipo] + ", " + formatoFecha(m.creado)),
+            crear("p", "det-texto", m.mensaje)
+        );
+
+        if (m.respuesta) {
+            let respuesta = crear("div", "ticket-resp");
+            respuesta.append(crear("strong", "", "Respuesta"), crear("p", "det-texto", m.respuesta));
+            ticket.append(respuesta);
+        }
+
+        return ticket;
+    }));
+}
+
+
+//////////////////////////////
 //Actualizaciones de la página
 //////////////////////////////
 
 /* agrega una versión nueva arriba cada vez que cambies la página */
 const ACTUALIZACIONES = [
+    {
+        version: "2.6",
+        fecha: "2026-11-07",
+        cambios: [
+            "Seguridad (contraseña y correo) ahora está en Ajustes",
+            "Nuevo apartado Soporte: preguntas frecuentes, mensajes al equipo y botón para reportar publicaciones",
+            "Más funciones en Ajustes: tamaño del texto, menos animaciones, opciones de juegos, descargar mis datos, espacio usado y buscar actualización",
+            "Accesos directos al mantener pulsado el icono de la app"
+        ]
+    },
     {
         version: "2.5",
         fecha: "2026-11-06",
@@ -2709,9 +3001,28 @@ window.addEventListener("online", () => {
 //cargar
 //////////////////////////////
 aplicarTema(localStorage.getItem("temas"));
+aplicarAjustes();
 ElegirAcceso("libre");
 
+/* los accesos directos del manifest abren la app con ?atajo=nombre */
+function abrirAtajo() {
+    let atajo = new URLSearchParams(location.search).get("atajo");
+    let destinos = {
+        minijuegos: MinijuegosBtn,
+        publicar: AbrirDow,
+        descargas: DescargasBtn,
+        soporte: AbrirSoporte,
+        cuenta: AbrirCuenta
+    };
+
+    if (!atajo || !destinos[atajo]) return false;
+
+    destinos[atajo]();
+    return true;
+}
+
 async function cargar() {
+    document.getElementById("VersionApp").textContent = "Versión " + ACTUALIZACIONES[0].version;
     document.getElementById("ModoDatos").textContent = Datos.modo === "nube"
         ? "datos guardados en la nube (Supabase)"
         : "datos guardados solo en este dispositivo";
@@ -2733,7 +3044,7 @@ async function cargar() {
 
     if (usuario) {
         actualizarMenuUsuario();
-        InicioBtn();
+        if (!abrirAtajo()) InicioBtn();
         console.log("datos cargados");
     } else {
         ir("DvRegister");
