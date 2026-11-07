@@ -220,6 +220,10 @@ panel lateral
                     <span class="menu-icono">✦</span>Actualizaciones
                 </button>
 
+                <button type="button" class="menu-item" data-red data-pantalla="DvSoporte" onclick="AbrirSoporte()">
+                    <span class="menu-icono">ⓘ</span>Soporte
+                </button>
+
                 <button type="button" class="menu-item" data-pantalla="DvAjustes" onclick="OpcBtn()">
                     <span class="menu-icono">⚙</span>Ajustes
                 </button>
@@ -467,7 +471,153 @@ cuenta
                     </div>
                     <p class="nota">El tiempo cuenta mientras usas cada sección. En los mini juegos no cuenta mientras estás en pausa.</p>
 
-                    <h2 class="seccion">Seguridad</h2>
+                    <h2 class="seccion">Mis publicaciones</h2>
+                    <div id="MisApks" class="rejilla"></div>
+
+                </section>
+
+<!------------------------------------
+actualizaciones
+------------------------------------>
+                <section class="pantalla" id="DvActualizaciones">
+
+                    <h1 class="titulo-pantalla">Actualizaciones</h1>
+
+                    <div id="ListaActualizaciones" class="lista"></div>
+
+                </section>
+
+<!------------------------------------
+ajustes
+------------------------------------>
+                <section class="pantalla" id="DvAjustes">
+
+                    <h1 id="texto" class="titulo-pantalla">Ajustes</h1>
+
+<!------------------------------------
+temas
+------------------------------------>
+                    <h2 class="seccion">Tema</h2>
+                    <div id="ListaTemas" class="temas"></div>
+
+                    <h2 class="seccion">Apariencia</h2>
+
+                    <div class="ajuste-fila">
+                        <span>Tamaño del texto</span>
+                        <div class="guardado-botones">
+                            <button type="button" id="TextoPequeno" class="chip" onclick="ElegirTexto('pequeno')">pequeño</button>
+                            <button type="button" id="TextoNormal" class="chip activo" onclick="ElegirTexto('normal')">normal</button>
+                            <button type="button" id="TextoGrande" class="chip" onclick="ElegirTexto('grande')">grande</button>
+                        </div>
+                    </div>
+
+                    <div class="ajuste-fila">
+                        <span>Reducir animaciones</span>
+                        <button type="button" id="SwSinAnimaciones" class="interruptor" role="switch" aria-checked="false" aria-label="reducir animaciones" onclick="AlternarAjuste('sinAnimaciones')"><span></span></button>
+                    </div>
+
+                    <h2 class="seccion">Juegos</h2>
+
+                    <div class="ajuste-fila">
+                        <span>Pausar al salir de la pestaña</span>
+                        <button type="button" id="SwPausaAuto" class="interruptor" role="switch" aria-checked="true" aria-label="pausar al salir de la pestaña" onclick="AlternarAjuste('pausaAutomatica')"><span></span></button>
+                    </div>
+
+                    <div class="ajuste-fila">
+                        <span>Abrir en pantalla completa</span>
+                        <button type="button" id="SwPantallaCompleta" class="interruptor" role="switch" aria-checked="true" aria-label="abrir en pantalla completa" onclick="AlternarAjuste('pantallaCompleta')"><span></span></button>
+                    </div>
+
+                    <h2 class="seccion">Cuenta y privacidad</h2>
+
+                    <div class="ajuste-fila">
+                        <div class="ajuste-texto">
+                            <span>Seguridad</span>
+                            <small class="nota">contraseña y correo</small>
+                        </div>
+                        <button type="button" class="btn azul chico" onclick="AbrirSeguridad()">abrir</button>
+                    </div>
+
+                    <div class="ajuste-fila">
+                        <div class="ajuste-texto">
+                            <span>Descargar mis datos</span>
+                            <small class="nota">tu cuenta, tu tiempo y tus publicaciones</small>
+                        </div>
+                        <button type="button" class="btn chico" onclick="DescargarDatosBtn()">descargar</button>
+                    </div>
+
+                    <div class="ajuste-fila">
+                        <span>Términos y condiciones</span>
+                        <button type="button" class="btn chico" onclick="abrirTerminos()">leer</button>
+                    </div>
+
+                    <div class="ajuste-fila">
+                        <span>Cerrar sesión</span>
+                        <button type="button" class="btn chico" onclick="SalirBtn()">salir</button>
+                    </div>
+
+                    <h2 class="seccion">Descargas</h2>
+
+                    <div class="ajuste-fila">
+                        <div class="ajuste-texto">
+                            <span>Carpeta de descargas</span>
+                            <small id="CarpetaNombre" class="nota"></small>
+                        </div>
+                        <div class="guardado-botones">
+                            <button type="button" id="BtnCarpeta" class="btn azul chico" onclick="ElegirCarpetaBtn()">elegir</button>
+                            <button type="button" id="BtnQuitarCarpeta" class="btn chico" onclick="QuitarCarpetaBtn()" hidden>quitar</button>
+                        </div>
+                    </div>
+                    <p class="nota nota-ajuste" id="NotaCarpeta"></p>
+
+                    <h2 class="seccion">Almacenamiento</h2>
+
+                    <div class="ajuste-fila">
+                        <div class="ajuste-texto">
+                            <span>Espacio usado</span>
+                            <small id="AlmacenUso" class="nota"></small>
+                        </div>
+                        <button type="button" class="btn peligro chico" onclick="BorrarCopiasBtn()">borrar copias sin internet</button>
+                    </div>
+
+                    <h2 class="seccion">Ayuda</h2>
+
+                    <div class="ajuste-fila">
+                        <div class="ajuste-texto">
+                            <span>Soporte</span>
+                            <small class="nota">preguntas frecuentes y mensajes</small>
+                        </div>
+                        <button type="button" class="btn azul chico" onclick="AbrirSoporte()">abrir</button>
+                    </div>
+
+                    <h2 class="seccion">Aplicación</h2>
+
+                    <div class="ajuste-fila" id="FilaInstalar" hidden>
+                        <span>Instalar PkStore como app</span>
+                        <button type="button" id="BtnInstalar" class="btn azul chico" onclick="InstalarBtn()">instalar</button>
+                    </div>
+
+                    <div class="ajuste-fila">
+                        <div class="ajuste-texto">
+                            <span>Versión</span>
+                            <small id="VersionApp" class="nota"></small>
+                        </div>
+                        <button type="button" class="btn chico" onclick="BuscarActualizacionBtn()">buscar actualización</button>
+                    </div>
+
+                    <p class="nota" id="ModoDatos"></p>
+
+                </section>
+
+<!------------------------------------
+seguridad (contraseña y correo)
+------------------------------------>
+                <section class="pantalla" id="DvSeguridad">
+
+                    <button type="button" class="btn chico atras" onclick="OpcBtn()">← ajustes</button>
+
+                    <h1 class="titulo-pantalla">Seguridad</h1>
+                    <p class="nota" id="SegCorreo"></p>
 
                     <div class="formulario">
 
@@ -572,65 +722,99 @@ cuenta
 
                     </div>
 
-                    <h2 class="seccion">Mis publicaciones</h2>
-                    <div id="MisApks" class="rejilla"></div>
-
                 </section>
 
 <!------------------------------------
-actualizaciones
+soporte
 ------------------------------------>
-                <section class="pantalla" id="DvActualizaciones">
+                <section class="pantalla" id="DvSoporte">
 
-                    <h1 class="titulo-pantalla">Actualizaciones</h1>
+                    <h1 class="titulo-pantalla">Soporte</h1>
 
-                    <div id="ListaActualizaciones" class="lista"></div>
+                    <h2 class="seccion">Preguntas frecuentes</h2>
 
-                </section>
+                    <div class="lista">
+                        <details class="faq">
+                            <summary>¿Cómo publico una app, una página o un juego?</summary>
+                            <p>Entra a Publicar, elige si es una apk, una página web (con su enlace) o un archivo HTML, ponle nombre y descripción, y sube el archivo, el icono, las capturas y un video si quieres. Si es un archivo HTML puedes marcarlo como mini juego.</p>
+                        </details>
 
-<!------------------------------------
-ajustes
------------------------------------->
-                <section class="pantalla" id="DvAjustes">
+                        <details class="faq">
+                            <summary>¿Cómo funcionan los códigos de descarga?</summary>
+                            <p>Al publicar una apk puedes elegir descarga con código. Se crean 50 códigos de un solo uso que solo tú ves y puedes copiar. Quien quiera descargar escribe uno para desbloquear el enlace. Durante la primera hora puede desactivar el enlace, si aún no descargó, y el código se restablece.</p>
+                        </details>
 
-                    <h1 id="texto" class="titulo-pantalla">Ajustes</h1>
+                        <details class="faq">
+                            <summary>¿Por qué no puedo descargar una apk otra vez?</summary>
+                            <p>Cada persona descarga una apk una sola vez. Después el botón cambia a Abrir. Así las descargas se cuentan bien.</p>
+                        </details>
 
-<!------------------------------------
-temas
------------------------------------->
-                    <h2 class="seccion">Tema</h2>
-                    <div id="ListaTemas" class="temas"></div>
+                        <details class="faq">
+                            <summary>¿Cómo uso un archivo HTML sin internet?</summary>
+                            <p>Abre la publicación y toca “Descargar para usar sin internet”. Luego lo encuentras en Descargas y se abre aunque no tengas wifi. Solo funciona con HTML de un solo archivo.</p>
+                        </details>
 
-                    <h2 class="seccion">General</h2>
+                        <details class="faq">
+                            <summary>¿Cómo pauso un mini juego?</summary>
+                            <p>Dentro del visor toca Pausa o presiona la tecla Esc. También se pausa solo si sales de la pestaña (lo puedes cambiar en Ajustes).</p>
+                        </details>
 
-                    <div class="ajuste-fila">
-                        <div class="ajuste-texto">
-                            <span>Carpeta de descargas</span>
-                            <small id="CarpetaNombre" class="nota"></small>
+                        <details class="faq">
+                            <summary>¿Cómo cambio mi contraseña o mi correo?</summary>
+                            <p>Ve a Ajustes y toca Seguridad. Si no recuerdas tu contraseña, puedes usar un código que te llega al correo.</p>
+                        </details>
+
+                        <details class="faq">
+                            <summary>¿Dónde se guardan mis descargas?</summary>
+                            <p>En la carpeta de descargas de tu navegador. En los navegadores que lo permiten, puedes elegir otra carpeta en Ajustes.</p>
+                        </details>
+
+                        <details class="faq">
+                            <summary>¿Cómo instalo PkStore como app?</summary>
+                            <p>Si tu navegador lo permite, aparece “Instalar” en Ajustes. También puedes usar el menú del navegador y elegir “Instalar app” o “Agregar a pantalla de inicio”.</p>
+                        </details>
+
+                        <details class="faq">
+                            <summary>¿Cómo elimino mi cuenta?</summary>
+                            <p>Envíanos un mensaje aquí abajo con el tipo “mi cuenta” y te ayudamos a eliminarla.</p>
+                        </details>
+                    </div>
+
+                    <h2 class="seccion">Escríbenos</h2>
+
+                    <div class="formulario">
+
+                        <div class="chips-fila">
+                            <button type="button" id="SoporteProblema" class="chip activo" onclick="ElegirTipoSoporte('problema')">tengo un problema</button>
+                            <button type="button" id="SoporteSugerencia" class="chip" onclick="ElegirTipoSoporte('sugerencia')">sugerencia</button>
+                            <button type="button" id="SoporteReporte" class="chip" onclick="ElegirTipoSoporte('reporte')">reportar una publicación</button>
+                            <button type="button" id="SoporteCuenta" class="chip" onclick="ElegirTipoSoporte('cuenta')">mi cuenta</button>
                         </div>
-                        <div class="guardado-botones">
-                            <button type="button" id="BtnCarpeta" class="btn azul chico" onclick="ElegirCarpetaBtn()">elegir</button>
-                            <button type="button" id="BtnQuitarCarpeta" class="btn chico" onclick="QuitarCarpetaBtn()" hidden>quitar</button>
-                        </div>
-                    </div>
-                    <p class="nota nota-ajuste" id="NotaCarpeta"></p>
 
-                    <div class="ajuste-fila">
-                        <span>Términos y condiciones</span>
-                        <button type="button" class="btn chico" onclick="abrirTerminos()">leer</button>
+                        <input
+                            id="SoporteAsunto"
+                            class="input"
+                            type="text"
+                            maxlength="80"
+                            placeholder="asunto"
+                            aria-label="asunto"
+                        >
+
+                        <textarea
+                            id="SoporteMensaje"
+                            class="input"
+                            rows="5"
+                            maxlength="1000"
+                            placeholder="cuéntanos qué pasó"
+                            aria-label="mensaje"
+                        ></textarea>
+
+                        <button type="button" id="BtnSoporte" class="btn azul ancho" onclick="EnviarSoporteBtn()">enviar mensaje</button>
+
                     </div>
 
-                    <div class="ajuste-fila" id="FilaInstalar" hidden>
-                        <span>Instalar PkStore como app</span>
-                        <button type="button" id="BtnInstalar" class="btn azul chico" onclick="InstalarBtn()">instalar</button>
-                    </div>
-
-                    <div class="ajuste-fila">
-                        <span>Cerrar sesión</span>
-                        <button type="button" class="btn chico" onclick="SalirBtn()">salir</button>
-                    </div>
-
-                    <p class="nota" id="ModoDatos"></p>
+                    <h2 class="seccion">Mis mensajes</h2>
+                    <div id="ListaSoporte" class="lista"></div>
 
                 </section>
 
