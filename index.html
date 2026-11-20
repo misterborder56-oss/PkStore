@@ -1,0 +1,1459 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#121318">
+    <meta name="description" content="Publica y descarga aplicaciones y páginas">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="PkStore">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="icon-192.png">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <link rel="stylesheet" href="style.css">
+    <title>PkStore</title>
+</head>
+<body class="body" id="body">
+
+<!------------------------------------
+registrar
+------------------------------------>
+
+    <div class="cajita grande" id="DvRegister">
+        <h1 class="Text">registrate</h1>
+
+        <input
+            id="InpEmail"
+            class="input"
+            type="email"
+            placeholder="correo electrónico"
+            aria-label="correo electrónico"
+            autocomplete="email"
+            required
+        >
+
+        <input
+            id="InpName"
+            class="input"
+            type="text"
+            minlength="4"
+            maxlength="20"
+            placeholder="nombre"
+            aria-label="nombre"
+            autocomplete="username"
+            required
+        >
+
+        <input
+            id="InpPassword"
+            class="input"
+            type="password"
+            minlength="8"
+            placeholder="contraseña"
+            aria-label="contraseña"
+            autocomplete="new-password"
+            required
+        >
+
+        <label class="acepto">
+            <input type="checkbox" id="AceptoTerminos">
+            <span>Acepto los
+                <button type="button" class="enlace-texto" onclick="abrirTerminos()">términos y condiciones</button>
+            </span>
+        </label>
+
+        <button type="button" class="btn" onclick="RegistrarBtn()">registrar</button>
+
+        <button type="button" class="btn" onclick="AbrirLogin()">ya tengo una cuenta</button>
+
+    </div>
+
+
+
+<!------------------------------------
+login
+------------------------------------>
+
+    <div class="cajita grande" id="DvLogin">
+
+        <h1 class="Text">login</h1>
+
+        <input
+            id="Inpemail"
+            class="input"
+            type="email"
+            placeholder="correo electrónico"
+            aria-label="correo electrónico"
+            autocomplete="email"
+        >
+
+        <input
+            id="Inppassword"
+            class="input"
+            type="password"
+            placeholder="contraseña"
+            aria-label="contraseña"
+            autocomplete="current-password"
+        >
+
+        <button type="button" class="btn" onclick="LoginBtn()">login</button>
+
+        <button type="button" class="btn" onclick="AbrirRecuperar()">olvidé mi contraseña</button>
+
+        <button type="button" class="btn" onclick="AbrirRegistro()">no tengo cuenta</button>
+
+    </div>
+
+<!------------------------------------
+recuperar contraseña
+------------------------------------>
+
+    <div class="cajita grande" id="DvRecuperar">
+
+        <h1 class="Text">recuperar contraseña</h1>
+
+        <div id="RecPaso1">
+            <p class="nota">Escribe el correo de tu cuenta y te enviamos un código.</p>
+
+            <input
+                id="RecEmail"
+                class="input"
+                type="email"
+                placeholder="correo electrónico"
+                aria-label="correo electrónico"
+                autocomplete="email"
+            >
+
+            <button type="button" id="BtnRecEnviar" class="btn" onclick="RecuperarEnviarBtn()">enviar código</button>
+        </div>
+
+        <div id="RecPaso2" hidden>
+            <p class="nota" id="RecAviso"></p>
+
+            <input
+                id="RecCodigo"
+                class="input"
+                type="text"
+                inputmode="numeric"
+                maxlength="10"
+                placeholder="código del correo"
+                aria-label="código del correo"
+                autocomplete="one-time-code"
+            >
+
+            <input
+                id="RecClave"
+                class="input"
+                type="password"
+                placeholder="contraseña nueva"
+                aria-label="contraseña nueva"
+                autocomplete="new-password"
+            >
+
+            <input
+                id="RecClave2"
+                class="input"
+                type="password"
+                placeholder="repite la contraseña nueva"
+                aria-label="repite la contraseña nueva"
+                autocomplete="new-password"
+            >
+
+            <button type="button" id="BtnRecCambiar" class="btn" onclick="RecuperarCambiarBtn()">cambiar contraseña</button>
+
+            <button type="button" class="btn" onclick="RecuperarEnviarBtn()">reenviar código</button>
+        </div>
+
+        <button type="button" class="btn" onclick="AbrirLogin()">volver al login</button>
+
+    </div>
+
+
+<!------------------------------------
+tienda: menú lateral + contenido
+------------------------------------>
+    <div id="Shell">
+
+        <div id="Fondo" class="fondo" onclick="CerrarMenu()"></div>
+
+<!------------------------------------
+panel lateral
+------------------------------------>
+        <aside id="Menu" class="menu" aria-label="menú">
+
+            <div class="menu-marca">
+                <span class="logo">pk</span>
+                <span>PkStore</span>
+            </div>
+
+            <nav class="menu-nav">
+                <button type="button" class="menu-item" data-red data-pantalla="DvInicio" onclick="InicioBtn()">
+                    <span class="menu-icono">⌂</span>Inicio
+                </button>
+
+                <button type="button" id="ApkBtn" class="menu-item" data-red data-pantalla="DvApk" data-filtro="archivo" onclick="ApkBtn()">
+                    <span class="menu-icono">▦</span>Apps
+                </button>
+
+                <button type="button" class="menu-item" data-red data-pantalla="DvApk" data-filtro="web" onclick="PaginasBtn()">
+                    <span class="menu-icono">◍</span>Páginas
+                </button>
+
+                <button type="button" class="menu-item" data-red data-pantalla="DvMinijuegos" onclick="MinijuegosBtn()">
+                    <span class="menu-icono">◈</span>Mini juegos
+                </button>
+
+                <button type="button" class="menu-item" data-red data-pantalla="DvFile" onclick="AbrirDow()">
+                    <span class="menu-icono">＋</span>Publicar
+                </button>
+
+                <button type="button" class="menu-item" data-pantalla="DvDescargas" onclick="DescargasBtn()">
+                    <span class="menu-icono">⇩</span>Descargas
+                </button>
+
+                <button type="button" class="menu-item" data-red data-pantalla="DvCuenta" onclick="AbrirCuenta()">
+                    <span class="menu-icono">☺</span>Mi cuenta
+                </button>
+
+                <button type="button" class="menu-item" data-pantalla="DvActualizaciones" onclick="AbrirActualizaciones()">
+                    <span class="menu-icono">✦</span>Actualizaciones
+                </button>
+
+                <button type="button" class="menu-item" data-red data-pantalla="DvSoporte" onclick="AbrirSoporte()">
+                    <span class="menu-icono">ⓘ</span>Soporte
+                </button>
+
+                <button type="button" class="menu-item" data-pantalla="DvAjustes" onclick="OpcBtn()">
+                    <span class="menu-icono">⚙</span>Ajustes
+                </button>
+            </nav>
+
+            <button type="button" class="menu-usuario" onclick="AbrirCuenta()">
+                <span id="MenuAvatar" class="avatar chico"></span>
+                <span id="MenuNombre" class="menu-nombre"></span>
+            </button>
+
+        </aside>
+
+        <div class="principal">
+
+            <header class="barra-sup">
+                <button type="button" class="icono-btn menu-btn" aria-label="abrir menú" onclick="AbrirMenu()">☰</button>
+
+                <div class="buscador-caja">
+                    <span class="lupa">⌕</span>
+                    <input
+                        id="BuscarApk"
+                        class="buscador-sup"
+                        type="search"
+                        placeholder="buscar en PkStore"
+                        aria-label="buscar en PkStore"
+                        autocomplete="off"
+                        oninput="BuscarInput()"
+                    >
+                </div>
+
+                <button type="button" class="btn azul chico" onclick="AbrirDow()">Publicar</button>
+            </header>
+
+            <div id="AvisoRed" class="aviso-red" hidden>
+                Sin conexión: solo puedes usar lo que guardaste en Descargas.
+            </div>
+
+            <main class="contenido">
+
+<!------------------------------------
+inicio
+------------------------------------>
+                <section class="pantalla" id="DvInicio">
+
+                    <div class="hero">
+                        <div>
+                            <h1>Descubre y comparte</h1>
+                            <p>Apps, páginas web y archivos HTML en un solo lugar.</p>
+                        </div>
+                        <button type="button" class="btn azul chico" onclick="AbrirDow()">Publicar algo</button>
+                    </div>
+
+                    <div id="InicioFilas"></div>
+
+                </section>
+
+<!------------------------------------
+apks y páginas
+------------------------------------>
+                <section class="pantalla" id="DvApk">
+
+                    <h1 id="TituloLista" class="titulo-pantalla">Apps</h1>
+
+                    <div class="chips-fila">
+                        <button type="button" id="FiltroTodo" class="chip" onclick="Filtrar('todo')">Todo</button>
+                        <button type="button" id="FiltroArchivo" class="chip" onclick="Filtrar('archivo')">Apps</button>
+                        <button type="button" id="FiltroWeb" class="chip" onclick="Filtrar('web')">Páginas</button>
+                    </div>
+
+                    <div id="ListaApks" class="rejilla"></div>
+
+                </section>
+
+<!------------------------------------
+mini juegos
+------------------------------------>
+                <section class="pantalla" id="DvMinijuegos">
+
+                    <h1 class="titulo-pantalla">Mini juegos</h1>
+                    <p class="nota" id="TiempoMinijuegos"></p>
+
+                    <div id="ListaMinijuegos" class="rejilla"></div>
+
+                </section>
+
+<!------------------------------------
+detalle de una apk
+------------------------------------>
+                <section class="pantalla" id="DvDetalle">
+
+                    <button type="button" class="btn chico atras" onclick="CerrarDetalle()">← volver</button>
+
+                    <div id="ContenidoDetalle"></div>
+
+                </section>
+
+<!------------------------------------
+publicar
+------------------------------------>
+                <section class="pantalla" id="DvFile">
+
+                    <h1 class="titulo-pantalla">Publicar</h1>
+
+                    <div class="formulario">
+
+                        <p class="campo-titulo">¿Qué vas a publicar?</p>
+                        <div class="chips-fila">
+                            <button type="button" id="TipoArchivo" class="chip activo" onclick="ElegirTipo('archivo')">apk / archivo</button>
+                            <button type="button" id="TipoPagina" class="chip" onclick="ElegirTipo('pagina')">página web (url)</button>
+                            <button type="button" id="TipoHtml" class="chip" onclick="ElegirTipo('html')">archivo html</button>
+                        </div>
+
+                        <div id="CampoCategoria" hidden>
+                            <p class="campo-titulo">Categoría</p>
+                            <div class="chips-fila">
+                                <button type="button" id="CatGeneral" class="chip activo" onclick="ElegirCategoria('general')">página o archivo</button>
+                                <button type="button" id="CatMinijuego" class="chip" onclick="ElegirCategoria('minijuego')">mini juego</button>
+                            </div>
+                        </div>
+
+                        <div id="CampoAcceso">
+                            <p class="campo-titulo">Descarga</p>
+                            <div class="chips-fila">
+                                <button type="button" id="AccesoLibre" class="chip activo" onclick="ElegirAcceso('libre')">libre</button>
+                                <button type="button" id="AccesoCodigo" class="chip" onclick="ElegirAcceso('codigo')">con código de un solo uso</button>
+                            </div>
+                            <p id="NotaAcceso" class="nota" hidden>
+                                Se crean {TOTAL} códigos que solo tú puedes ver y copiar. Cada código desbloquea la descarga para una persona.
+                            </p>
+                        </div>
+
+                        <input
+                            id="InpApkNombre"
+                            class="input"
+                            type="text"
+                            maxlength="30"
+                            placeholder="nombre"
+                            aria-label="nombre"
+                        >
+
+                        <textarea
+                            id="InpApkDescripcion"
+                            class="input"
+                            rows="3"
+                            maxlength="300"
+                            placeholder="descripción"
+                            aria-label="descripción"
+                        ></textarea>
+
+                        <input
+                            id="InpApkUrl"
+                            class="input"
+                            type="url"
+                            placeholder="https://mi-pagina.com"
+                            aria-label="enlace de la página"
+                            hidden
+                        >
+
+                        <input class="input imagen" id="SubirFile" type="file">
+                        <input class="input imagen" id="SubirImagen" type="file" accept="image/*">
+                        <input class="input imagen" id="SubirCapturas" type="file" accept="image/*" multiple>
+                        <input class="input imagen" id="SubirVideo" type="file" accept="video/*">
+
+                        <label for="SubirFile" id="LabelArchivo" class="subida">
+                            <span class="subida-icono"><img src="icon1.png" alt=""></span>
+                            <span class="subida-texto">
+                                <strong id="TituloArchivo">Archivo</strong>
+                                <small id="PrevArchivo">ningún archivo elegido</small>
+                            </span>
+                        </label>
+
+                        <label for="SubirImagen" class="subida">
+                            <span class="subida-icono"><img class="icono-img" src="icon2.png" alt=""></span>
+                            <span class="subida-texto">
+                                <strong>Icono</strong>
+                                <small id="PrevIcono">ningún icono elegido</small>
+                            </span>
+                        </label>
+
+                        <label for="SubirCapturas" class="subida">
+                            <span class="subida-icono"><img class="icono-img" src="icon2.png" alt=""></span>
+                            <span class="subida-texto">
+                                <strong>Capturas</strong>
+                                <small id="PrevCapturasTexto">hasta 8 imágenes</small>
+                            </span>
+                        </label>
+                        <div id="PrevCapturas" class="prev-fila"></div>
+
+                        <label for="SubirVideo" class="subida">
+                            <span class="subida-icono">▶</span>
+                            <span class="subida-texto">
+                                <strong>Video</strong>
+                                <small id="PrevVideo">un solo video (opcional)</small>
+                            </span>
+                        </label>
+
+                        <button type="button" id="BtnPublicar" class="btn azul ancho" onclick="PublicarBtn()">publicar</button>
+
+                    </div>
+
+                </section>
+
+<!------------------------------------
+cuenta
+------------------------------------>
+                <section class="pantalla" id="DvCuenta">
+
+                    <h1 class="titulo-pantalla">Mi cuenta</h1>
+
+                    <div class="perfil-cab">
+                        <label for="SubirFoto" id="AvatarCuenta" class="avatar enorme" aria-label="cambiar foto de perfil"></label>
+                        <input class="input imagen" id="SubirFoto" type="file" accept="image/*">
+
+                        <div class="perfil-datos">
+                            <p class="nota">toca la foto para cambiarla</p>
+                            <p class="nota" id="CuentaCorreo"></p>
+
+                            <input
+                                id="InpCuentaNombre"
+                                class="input"
+                                type="text"
+                                minlength="4"
+                                maxlength="20"
+                                placeholder="nombre"
+                                aria-label="nombre"
+                            >
+
+                            <button type="button" id="BtnGuardarCuenta" class="btn azul chico" onclick="GuardarCuentaBtn()">guardar cambios</button>
+                        </div>
+                    </div>
+
+                    <div class="datos cuatro">
+                        <div class="dato"><strong id="DatoPublicadas">0</strong><span>publicadas</span></div>
+                        <div class="dato"><strong id="DatoCalificacion">—</strong><span>calificación</span></div>
+                        <div class="dato"><strong id="DatoDescargas">0</strong><span>descargas de apks</span></div>
+                        <div class="dato"><strong id="DatoVisitas">0</strong><span>visitas a páginas</span></div>
+                        <div class="dato"><strong id="DatoPartidas">0</strong><span>partidas de mini juegos</span></div>
+                    </div>
+
+                    <h2 class="seccion">Tu tiempo</h2>
+                    <div class="datos">
+                        <div class="dato"><strong id="TiempoApks">0 min</strong><span>en apks</span></div>
+                        <div class="dato"><strong id="TiempoPaginas">0 min</strong><span>en páginas</span></div>
+                        <div class="dato"><strong id="TiempoJuegos">0 min</strong><span>en mini juegos</span></div>
+                    </div>
+                    <p class="nota">El tiempo cuenta mientras usas cada sección. En los mini juegos no cuenta mientras estás en pausa.</p>
+
+                    <h2 class="seccion">Mis publicaciones</h2>
+                    <div id="MisApks" class="rejilla"></div>
+
+                </section>
+
+<!------------------------------------
+actualizaciones
+------------------------------------>
+                <section class="pantalla" id="DvActualizaciones">
+
+                    <h1 class="titulo-pantalla">Actualizaciones</h1>
+
+                    <div id="ListaActualizaciones" class="lista"></div>
+
+                </section>
+
+<!------------------------------------
+ajustes
+------------------------------------>
+                <section class="pantalla" id="DvAjustes">
+
+                    <h1 id="texto" class="titulo-pantalla">Ajustes</h1>
+
+<!------------------------------------
+temas
+------------------------------------>
+                    <h2 class="seccion">Tema</h2>
+                    <div id="ListaTemas" class="temas"></div>
+
+                    <h2 class="seccion">Apariencia</h2>
+
+                    <div class="ajuste-fila">
+                        <span>Tamaño del texto</span>
+                        <div class="guardado-botones">
+                            <button type="button" id="TextoPequeno" class="chip" onclick="ElegirTexto('pequeno')">pequeño</button>
+                            <button type="button" id="TextoNormal" class="chip activo" onclick="ElegirTexto('normal')">normal</button>
+                            <button type="button" id="TextoGrande" class="chip" onclick="ElegirTexto('grande')">grande</button>
+                        </div>
+                    </div>
+
+                    <div class="ajuste-fila">
+                        <span>Reducir animaciones</span>
+                        <button type="button" id="SwSinAnimaciones" class="interruptor" role="switch" aria-checked="false" aria-label="reducir animaciones" onclick="AlternarAjuste('sinAnimaciones')"><span></span></button>
+                    </div>
+
+                    <h2 class="seccion">Juegos</h2>
+
+                    <div class="ajuste-fila">
+                        <span>Pausar al salir de la pestaña</span>
+                        <button type="button" id="SwPausaAuto" class="interruptor" role="switch" aria-checked="true" aria-label="pausar al salir de la pestaña" onclick="AlternarAjuste('pausaAutomatica')"><span></span></button>
+                    </div>
+
+                    <div class="ajuste-fila">
+                        <span>Abrir en pantalla completa</span>
+                        <button type="button" id="SwPantallaCompleta" class="interruptor" role="switch" aria-checked="true" aria-label="abrir en pantalla completa" onclick="AlternarAjuste('pantallaCompleta')"><span></span></button>
+                    </div>
+
+                    <h2 class="seccion">Cuenta y privacidad</h2>
+
+                    <div class="ajuste-fila">
+                        <div class="ajuste-texto">
+                            <span>Seguridad</span>
+                            <small class="nota">contraseña y correo</small>
+                        </div>
+                        <button type="button" class="btn azul chico" onclick="AbrirSeguridad()">abrir</button>
+                    </div>
+
+                    <div class="ajuste-fila">
+                        <div class="ajuste-texto">
+                            <span>Descargar mis datos</span>
+                            <small class="nota">tu cuenta, tu tiempo y tus publicaciones</small>
+                        </div>
+                        <button type="button" class="btn chico" onclick="DescargarDatosBtn()">descargar</button>
+                    </div>
+
+                    <div class="ajuste-fila">
+                        <span>Términos y condiciones</span>
+                        <button type="button" class="btn chico" onclick="abrirTerminos()">leer</button>
+                    </div>
+
+                    <div class="ajuste-fila">
+                        <span>Cerrar sesión</span>
+                        <button type="button" class="btn chico" onclick="SalirBtn()">salir</button>
+                    </div>
+
+                    <h2 class="seccion">Descargas</h2>
+
+                    <div class="ajuste-fila">
+                        <div class="ajuste-texto">
+                            <span>Carpeta de descargas</span>
+                            <small id="CarpetaNombre" class="nota"></small>
+                        </div>
+                        <div class="guardado-botones">
+                            <button type="button" id="BtnCarpeta" class="btn azul chico" onclick="ElegirCarpetaBtn()">elegir</button>
+                            <button type="button" id="BtnQuitarCarpeta" class="btn chico" onclick="QuitarCarpetaBtn()" hidden>quitar</button>
+                        </div>
+                    </div>
+                    <p class="nota nota-ajuste" id="NotaCarpeta"></p>
+
+                    <h2 class="seccion">Almacenamiento</h2>
+
+                    <div class="ajuste-fila">
+                        <div class="ajuste-texto">
+                            <span>Espacio usado</span>
+                            <small id="AlmacenUso" class="nota"></small>
+                        </div>
+                        <button type="button" class="btn peligro chico" onclick="BorrarCopiasBtn()">borrar copias sin internet</button>
+                    </div>
+
+                    <h2 class="seccion">Ayuda</h2>
+
+                    <div class="ajuste-fila">
+                        <div class="ajuste-texto">
+                            <span>Soporte</span>
+                            <small class="nota">preguntas frecuentes y mensajes</small>
+                        </div>
+                        <button type="button" class="btn azul chico" onclick="AbrirSoporte()">abrir</button>
+                    </div>
+
+                    <h2 class="seccion">Aplicación</h2>
+
+                    <div class="ajuste-fila" id="FilaInstalar" hidden>
+                        <span>Instalar PkStore como app</span>
+                        <button type="button" id="BtnInstalar" class="btn azul chico" onclick="InstalarBtn()">instalar</button>
+                    </div>
+
+                    <div class="ajuste-fila">
+                        <div class="ajuste-texto">
+                            <span>Versión</span>
+                            <small id="VersionApp" class="nota"></small>
+                        </div>
+                        <button type="button" class="btn chico" onclick="BuscarActualizacionBtn()">buscar actualización</button>
+                    </div>
+
+                    <p class="nota" id="ModoDatos"></p>
+
+                </section>
+
+<!------------------------------------
+seguridad (contraseña y correo)
+------------------------------------>
+                <section class="pantalla" id="DvSeguridad">
+
+                    <button type="button" class="btn chico atras" onclick="OpcBtn()">← ajustes</button>
+
+                    <h1 class="titulo-pantalla">Seguridad</h1>
+                    <p class="nota" id="SegCorreo"></p>
+
+                    <div class="formulario">
+
+                        <div class="panel panel-form">
+                            <h3>Cambiar contraseña</h3>
+
+                            <div class="chips-fila">
+                                <button type="button" id="ClaveModoActual" class="chip activo" onclick="ElegirModoClave('actual')">con mi contraseña actual</button>
+                                <button type="button" id="ClaveModoCodigo" class="chip" onclick="ElegirModoClave('codigo')">con un código al correo</button>
+                            </div>
+
+                            <div id="CampoClaveActual" class="panel-form">
+                                <input
+                                    id="ClaveActual"
+                                    class="input"
+                                    type="password"
+                                    placeholder="contraseña actual"
+                                    aria-label="contraseña actual"
+                                    autocomplete="current-password"
+                                >
+                            </div>
+
+                            <div id="CampoClaveCodigo" class="panel-form" hidden>
+                                <p class="nota">Te enviamos un código al correo de tu cuenta.</p>
+                                <button type="button" id="BtnCodigoClave" class="btn chico" onclick="EnviarCodigoClaveBtn()">enviar código</button>
+                                <input
+                                    id="ClaveCodigo"
+                                    class="input"
+                                    type="text"
+                                    inputmode="numeric"
+                                    maxlength="10"
+                                    placeholder="código del correo"
+                                    aria-label="código del correo"
+                                    autocomplete="one-time-code"
+                                >
+                            </div>
+
+                            <input
+                                id="ClaveNueva"
+                                class="input"
+                                type="password"
+                                placeholder="contraseña nueva"
+                                aria-label="contraseña nueva"
+                                autocomplete="new-password"
+                            >
+
+                            <input
+                                id="ClaveNueva2"
+                                class="input"
+                                type="password"
+                                placeholder="repite la contraseña nueva"
+                                aria-label="repite la contraseña nueva"
+                                autocomplete="new-password"
+                            >
+
+                            <button type="button" id="BtnCambiarClave" class="btn azul ancho" onclick="CambiarClaveBtn()">cambiar contraseña</button>
+                        </div>
+
+                        <div class="panel panel-form">
+                            <h3>Cambiar correo</h3>
+
+                            <div id="CorreoPaso1" class="panel-form">
+                                <input
+                                    id="CorreoNuevo"
+                                    class="input"
+                                    type="email"
+                                    placeholder="correo nuevo"
+                                    aria-label="correo nuevo"
+                                    autocomplete="email"
+                                >
+
+                                <input
+                                    id="ClaveParaCorreo"
+                                    class="input"
+                                    type="password"
+                                    placeholder="tu contraseña actual"
+                                    aria-label="tu contraseña actual"
+                                    autocomplete="current-password"
+                                >
+
+                                <button type="button" id="BtnEnviarCorreo" class="btn azul ancho" onclick="EnviarCodigoCorreoBtn()">enviar código al correo nuevo</button>
+                            </div>
+
+                            <div id="CorreoPaso2" class="panel-form" hidden>
+                                <p class="nota" id="CorreoAviso"></p>
+
+                                <input
+                                    id="CodigoCorreo"
+                                    class="input"
+                                    type="text"
+                                    inputmode="numeric"
+                                    maxlength="10"
+                                    placeholder="código del correo nuevo"
+                                    aria-label="código del correo nuevo"
+                                    autocomplete="one-time-code"
+                                >
+
+                                <button type="button" class="btn azul ancho" onclick="ConfirmarCorreoBtn()">confirmar correo</button>
+                                <button type="button" class="btn chico" onclick="CancelarCorreoBtn()">cancelar</button>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </section>
+
+<!------------------------------------
+soporte
+------------------------------------>
+                <section class="pantalla" id="DvSoporte">
+
+                    <h1 class="titulo-pantalla">Soporte</h1>
+
+                    <h2 class="seccion">Preguntas frecuentes</h2>
+
+                    <div class="lista">
+                        <details class="faq">
+                            <summary>¿Cómo publico una app, una página o un juego?</summary>
+                            <p>Entra a Publicar, elige si es una apk, una página web (con su enlace) o un archivo HTML, ponle nombre y descripción, y sube el archivo, el icono, las capturas y un video si quieres. Si es un archivo HTML puedes marcarlo como mini juego.</p>
+                        </details>
+
+                        <details class="faq">
+                            <summary>¿Cómo funcionan los códigos de descarga?</summary>
+                            <p>Al publicar una apk puedes elegir descarga con código. Se crean 50 códigos de un solo uso que solo tú ves y puedes copiar. Quien quiera descargar escribe uno para desbloquear el enlace. Durante la primera hora puede desactivar el enlace, si aún no descargó, y el código se restablece.</p>
+                        </details>
+
+                        <details class="faq">
+                            <summary>¿Por qué no puedo descargar una apk otra vez?</summary>
+                            <p>Cada persona descarga una apk una sola vez. Después el botón cambia a Abrir. Así las descargas se cuentan bien.</p>
+                        </details>
+
+                        <details class="faq">
+                            <summary>¿Cómo uso un archivo HTML sin internet?</summary>
+                            <p>Abre la publicación y toca “Descargar para usar sin internet”. Luego lo encuentras en Descargas y se abre aunque no tengas wifi. Solo funciona con HTML de un solo archivo.</p>
+                        </details>
+
+                        <details class="faq">
+                            <summary>¿Cómo agrego un juego a la pantalla principal?</summary>
+                            <p>Abre el archivo HTML o mini juego y toca “Agregar a la pantalla principal”. Se abre una página solo del juego: ahí aceptas el aviso del navegador (o, si no aparece, usas el menú ⋮ y eliges “Agregar a la pantalla principal”). El juego se guarda en tu dispositivo y abre directo, también sin internet. En iPhone usa el botón Compartir de Safari y “Agregar a pantalla de inicio”.</p>
+                        </details>
+
+                        <details class="faq">
+                            <summary>¿Mi progreso en los juegos se guarda?</summary>
+                            <p>Sí. Lo que un juego guarda con localStorage queda en tu dispositivo, juego por juego, y se mantiene aunque cierres PkStore. No se comparte entre dispositivos. Puedes borrarlo desde el menú de pausa con “Borrar progreso”.</p>
+                        </details>
+
+                        <details class="faq">
+                            <summary>¿Cómo pauso un mini juego?</summary>
+                            <p>Dentro del visor toca Pausa o presiona la tecla Esc. También se pausa solo si sales de la pestaña (lo puedes cambiar en Ajustes).</p>
+                        </details>
+
+                        <details class="faq">
+                            <summary>¿Cómo cambio mi contraseña o mi correo?</summary>
+                            <p>Ve a Ajustes y toca Seguridad. Si no recuerdas tu contraseña, puedes usar un código que te llega al correo.</p>
+                        </details>
+
+                        <details class="faq">
+                            <summary>¿Dónde se guardan mis descargas?</summary>
+                            <p>En la carpeta de descargas de tu navegador. En los navegadores que lo permiten, puedes elegir otra carpeta en Ajustes.</p>
+                        </details>
+
+                        <details class="faq">
+                            <summary>¿Cómo instalo PkStore como app?</summary>
+                            <p>Si tu navegador lo permite, aparece “Instalar” en Ajustes. También puedes usar el menú del navegador y elegir “Instalar app” o “Agregar a pantalla de inicio”.</p>
+                        </details>
+
+                        <details class="faq">
+                            <summary>¿Cómo elimino mi cuenta?</summary>
+                            <p>Envíanos un mensaje aquí abajo con el tipo “mi cuenta” y te ayudamos a eliminarla.</p>
+                        </details>
+                    </div>
+
+                    <h2 class="seccion">Escríbenos</h2>
+
+                    <div class="formulario">
+
+                        <div class="chips-fila">
+                            <button type="button" id="SoporteProblema" class="chip activo" onclick="ElegirTipoSoporte('problema')">tengo un problema</button>
+                            <button type="button" id="SoporteSugerencia" class="chip" onclick="ElegirTipoSoporte('sugerencia')">sugerencia</button>
+                            <button type="button" id="SoporteReporte" class="chip" onclick="ElegirTipoSoporte('reporte')">reportar una publicación</button>
+                            <button type="button" id="SoporteCuenta" class="chip" onclick="ElegirTipoSoporte('cuenta')">mi cuenta</button>
+                        </div>
+
+                        <input
+                            id="SoporteAsunto"
+                            class="input"
+                            type="text"
+                            maxlength="80"
+                            placeholder="asunto"
+                            aria-label="asunto"
+                        >
+
+                        <textarea
+                            id="SoporteMensaje"
+                            class="input"
+                            rows="5"
+                            maxlength="1000"
+                            placeholder="cuéntanos qué pasó"
+                            aria-label="mensaje"
+                        ></textarea>
+
+                        <button type="button" id="BtnSoporte" class="btn azul ancho" onclick="EnviarSoporteBtn()">enviar mensaje</button>
+
+                    </div>
+
+                    <h2 class="seccion">Mis mensajes</h2>
+                    <div id="ListaSoporte" class="lista"></div>
+
+                </section>
+
+<!------------------------------------
+editor de archivos html (solo quien publicó)
+------------------------------------>
+                <section class="pantalla" id="DvEditor">
+
+                    <div class="editor-cab">
+                        <button type="button" class="btn chico" onclick="CerrarEditor()">← volver</button>
+                        <strong id="EditorTitulo" class="visor-titulo"></strong>
+                        <span id="EditorEstado" class="nota"></span>
+                    </div>
+
+                    <div class="editor-barra">
+                        <div class="chips-fila editor-pestanas">
+                            <button type="button" id="PestCodigo" class="chip activo" onclick="EditorPestana('codigo')">Código</button>
+                            <button type="button" id="PestVista" class="chip" onclick="EditorPestana('vista')">Vista previa</button>
+                        </div>
+
+                        <div class="guardado-botones">
+                            <button type="button" class="btn chico" onclick="document.getElementById('EditorArchivo').click()">Cargar un archivo</button>
+                            <button type="button" id="BtnEditorGuardar" class="btn azul chico" onclick="EditorGuardarBtn()">Guardar</button>
+                        </div>
+                    </div>
+
+                    <input class="input imagen" id="EditorArchivo" type="file" accept=".html,.htm,text/html">
+
+                    <div id="EditorZona" class="editor-zona">
+                        <textarea
+                            id="EditorCodigo"
+                            class="editor-codigo"
+                            spellcheck="false"
+                            autocapitalize="off"
+                            autocomplete="off"
+                            wrap="off"
+                            aria-label="código html"
+                        ></textarea>
+
+                        <iframe
+                            id="EditorVista"
+                            class="editor-vista"
+                            title="vista previa"
+                            sandbox="allow-scripts allow-forms allow-modals"
+                            referrerpolicy="no-referrer"
+                        ></iframe>
+                    </div>
+
+                    <p class="nota">Solo tú ves este editor. Al guardar, el archivo publicado se reemplaza (límite 2 MB).</p>
+
+                </section>
+
+<!------------------------------------
+descargas (funcionan sin internet)
+------------------------------------>
+                <section class="pantalla" id="DvDescargas">
+
+                    <h1 class="titulo-pantalla">Descargas</h1>
+                    <p class="nota">Las páginas HTML que guardaste se abren aquí, también sin internet. Las apks que descargaste aparecen en la lista, pero necesitan internet para abrirse.</p>
+
+                    <div id="ListaDescargas" class="lista"></div>
+
+                </section>
+
+            </main>
+        </div>
+
+<!------------------------------------
+visualizador html en pantalla completa
+------------------------------------>
+        <section class="visor" id="DvVisor">
+
+            <div class="visor-barra">
+                <button type="button" class="btn chico" onclick="CerrarVisor()">← salir</button>
+                <strong id="VisorTitulo" class="visor-titulo"></strong>
+                <span id="VisorTiempo" class="visor-tiempo" title="tiempo de esta partida (sin contar la pausa)">0:00</span>
+                <button type="button" id="BtnPausa" class="btn chico" aria-label="pausa" onclick="AlternarPausa()">⏸ Pausa</button>
+                <button type="button" class="icono-btn" aria-label="pantalla completa" onclick="AlternarPantallaCompleta()">⛶</button>
+            </div>
+
+            <div class="visor-zona">
+                <iframe
+                    id="VisorMarco"
+                    class="visor-marco"
+                    title="visualizador html"
+                    sandbox="allow-scripts allow-forms allow-popups allow-modals"
+                    referrerpolicy="no-referrer"
+                ></iframe>
+
+                <div id="VisorPausa" class="visor-pausa" hidden>
+                    <div class="visor-pausa-caja">
+                        <h2>En pausa</h2>
+                        <button type="button" class="btn azul chico" onclick="AlternarPausa()">▶ Seguir</button>
+                        <button type="button" class="btn chico" onclick="ReiniciarVisor()">↻ Reiniciar</button>
+                        <button type="button" class="btn chico" onclick="AlternarPantallaCompleta()">⛶ Pantalla completa</button>
+                        <button type="button" class="btn peligro chico" onclick="BorrarProgresoBtn()">Borrar progreso</button>
+                        <button type="button" class="btn peligro chico" onclick="CerrarVisor()">Salir</button>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <div id="Lightbox" class="lightbox" hidden onclick="CerrarLightbox()">
+            <img id="LightboxImg" alt="">
+        </div>
+
+    </div>
+
+
+<!------------------------------------
+términos y condiciones
+------------------------------------>
+    <div id="TerminosFondo" class="terminos-fondo" onclick="cerrarTerminos()"></div>
+
+    <div id="Terminos" class="Terminos" role="dialog" aria-modal="true" aria-label="Términos y condiciones">
+
+        <div class="TerminosHeader">
+            <h2>📜 Términos y Condiciones</h2>
+            <button type="button" aria-label="cerrar" onclick="cerrarTerminos()">✕</button>
+        </div>
+
+        <div class="TerminosContenido" id="TerminosContenido">
+
+            <h2>PkStore</h2>
+            <p class="fechaTerminos">
+                Última actualización: 6 de noviembre de 2026
+            </p>
+
+            <p>
+                Bienvenido a PkStore. Estos Términos y Condiciones
+                regulan el acceso, registro y utilización de nuestra
+                plataforma, incluyendo sus funciones, servicios y
+                contenidos publicados por los usuarios.
+            </p>
+
+            <p>
+                Al acceder, registrarse o utilizar PkStore,
+                aceptas las condiciones descritas en este documento.
+                Si no estás de acuerdo con ellas, debes abstenerte
+                de utilizar los servicios que requieren dicha aceptación.
+            </p>
+
+            <hr>
+
+            <h3>1. ¿Qué es PkStore?</h3>
+
+            <p>
+                PkStore es una plataforma digital destinada a descubrir,
+                compartir y consultar aplicaciones, páginas web,
+                herramientas digitales y minijuegos.
+            </p>
+
+            <p>La plataforma permite a sus usuarios:</p>
+
+            <ul>
+                <li>Crear cuentas personales.</li>
+                <li>Iniciar y cerrar sesión.</li>
+                <li>Publicar aplicaciones, páginas web y minijuegos.</li>
+                <li>Compartir archivos y enlaces.</li>
+                <li>Consultar publicaciones de otros usuarios.</li>
+                <li>Comentar y valorar contenido.</li>
+                <li>Interactuar con otros miembros de la comunidad.</li>
+            </ul>
+
+            <p>
+                PkStore funciona como una plataforma de distribución
+                y descubrimiento de contenido digital. La disponibilidad
+                de cada publicación depende de su autor y de las
+                condiciones de la plataforma.
+            </p>
+
+            <hr>
+
+            <h3>2. Aceptación de los términos</h3>
+
+            <p>
+                Al crear una cuenta o utilizar las funciones de PkStore,
+                el usuario declara que:
+            </p>
+
+            <ul>
+                <li>Ha leído estos Términos y Condiciones.</li>
+                <li>Comprende las reglas de utilización de la plataforma.</li>
+                <li>Se compromete a respetar las normas establecidas.</li>
+                <li>No utilizará PkStore para actividades ilegales o perjudiciales.</li>
+            </ul>
+
+            <p>
+                La aceptación de estos términos no elimina los derechos
+                que la legislación aplicable reconoce a los usuarios.
+            </p>
+
+            <hr>
+
+            <h3>3. Registro y cuentas de usuario</h3>
+
+            <p>
+                Para utilizar determinadas funciones de PkStore
+                será necesario crear una cuenta.
+            </p>
+
+            <p>El usuario se compromete a:</p>
+
+            <ul>
+                <li>Proporcionar información verdadera y actualizada.</li>
+                <li>Utilizar un nombre de usuario apropiado.</li>
+                <li>Mantener la confidencialidad de sus credenciales.</li>
+                <li>No compartir su cuenta con personas no autorizadas.</li>
+                <li>Notificar cualquier uso no autorizado de su cuenta.</li>
+            </ul>
+
+            <p>
+                Cada usuario es responsable de las actividades realizadas
+                mediante su cuenta, en la medida permitida por la legislación
+                aplicable.
+            </p>
+
+            <p>
+                PkStore podrá restringir o suspender cuentas que incumplan
+                estos términos.
+            </p>
+
+            <hr>
+
+            <h3>4. Publicación de contenido</h3>
+
+            <p>
+                PkStore permite a los usuarios publicar aplicaciones,
+                páginas web, herramientas digitales y minijuegos.
+            </p>
+
+            <p>Al publicar contenido, el usuario declara que:</p>
+
+            <ul>
+                <li>Tiene los derechos o permisos necesarios para compartirlo.</li>
+                <li>El contenido no infringe derechos de terceros.</li>
+                <li>La publicación no contiene información engañosa.</li>
+                <li>No utiliza contenido robado, pirateado o distribuido ilegalmente.</li>
+                <li>La información proporcionada sobre el contenido es correcta.</li>
+            </ul>
+
+            <p>
+                El autor conserva los derechos que le correspondan
+                sobre sus creaciones.
+            </p>
+
+            <p>
+                Al publicar contenido, concede a PkStore una autorización
+                no exclusiva para alojarlo, almacenarlo, mostrarlo y
+                distribuirlo dentro de las funciones de la plataforma,
+                mientras la publicación permanezca disponible y conforme
+                a las condiciones aplicables.
+            </p>
+
+            <hr>
+
+            <h3>5. Subida de archivos</h3>
+
+            <p>
+                Los usuarios pueden compartir archivos relacionados
+                con aplicaciones, páginas web y minijuegos.
+            </p>
+
+            <p>Está prohibido subir:</p>
+
+            <ul>
+                <li>Archivos maliciosos o diseñados para perjudicar dispositivos.</li>
+                <li>Virus, troyanos y otros programas dañinos.</li>
+                <li>Archivos destinados a robar información personal.</li>
+                <li>Contenido ilegal.</li>
+                <li>Material que infrinja derechos de autor.</li>
+                <li>Archivos que intenten explotar vulnerabilidades de otros usuarios.</li>
+            </ul>
+
+            <p>
+                PkStore podrá retirar archivos que representen un riesgo
+                para la seguridad de la plataforma o de sus usuarios.
+            </p>
+
+            <p>
+                La publicación de un archivo no significa que PkStore
+                garantice que sea seguro, funcional o compatible con
+                todos los dispositivos.
+            </p>
+
+            <hr>
+
+            <h3>6. Aplicaciones y contenido de terceros</h3>
+
+            <p>
+                PkStore puede contener enlaces, aplicaciones, páginas web
+                y archivos creados por terceros.
+            </p>
+
+            <p>
+                El contenido publicado por los usuarios no representa
+                necesariamente la opinión, recomendación o aprobación
+                de PkStore.
+            </p>
+
+            <p>
+                Cada autor es responsable de los permisos, licencias,
+                derechos y obligaciones relacionados con su contenido.
+            </p>
+
+            <p>
+                Los usuarios deben actuar con precaución antes de descargar,
+                instalar o utilizar archivos externos.
+            </p>
+
+            <p>
+                PkStore podrá revisar, restringir o retirar publicaciones
+                que incumplan las normas de la plataforma.
+            </p>
+
+            <hr>
+
+            <h3>7. Comentarios y valoraciones</h3>
+
+            <p>
+                Los usuarios pueden comentar y valorar las publicaciones
+                disponibles.
+            </p>
+
+            <p>Al utilizar estas funciones, se comprometen a:</p>
+
+            <ul>
+                <li>Publicar opiniones respetuosas.</li>
+                <li>No realizar amenazas ni acoso.</li>
+                <li>No publicar información privada de otras personas.</li>
+                <li>No utilizar comentarios para realizar spam.</li>
+                <li>No manipular artificialmente las valoraciones.</li>
+                <li>No publicar opiniones fraudulentas o deliberadamente engañosas.</li>
+            </ul>
+
+            <p>
+                PkStore podrá eliminar comentarios o valoraciones que
+                incumplan estas condiciones.
+            </p>
+
+            <p>
+                Las opiniones publicadas pertenecen a sus respectivos
+                autores y no representan necesariamente a PkStore.
+            </p>
+
+            <hr>
+
+            <h3>8. Conductas prohibidas</h3>
+
+            <p>Queda prohibido utilizar PkStore para:</p>
+
+            <ul>
+                <li>Distribuir software malicioso.</li>
+                <li>Realizar estafas o fraudes.</li>
+                <li>Suplantar la identidad de otros usuarios.</li>
+                <li>Robar cuentas o información personal.</li>
+                <li>Intentar acceder sin autorización a sistemas privados.</li>
+                <li>Publicar contenido ilegal.</li>
+                <li>Distribuir contenido protegido sin autorización.</li>
+                <li>Manipular comentarios o valoraciones.</li>
+                <li>Realizar spam o publicidad engañosa.</li>
+                <li>Interferir deliberadamente con el funcionamiento de la plataforma.</li>
+            </ul>
+
+            <p>
+                El incumplimiento de estas reglas puede provocar
+                la eliminación de publicaciones, restricciones
+                o suspensión de cuentas.
+            </p>
+
+            <hr>
+
+            <h3>9. Derechos de propiedad intelectual</h3>
+
+            <p>
+                Los diseños, logotipos, elementos gráficos, textos
+                y componentes originales de PkStore están protegidos
+                por los derechos de propiedad intelectual que correspondan.
+            </p>
+
+            <p>
+                No se permite copiar, modificar, distribuir o utilizar
+                estos elementos sin la autorización correspondiente,
+                salvo cuando la ley lo permita.
+            </p>
+
+            <p>
+                Los usuarios conservan los derechos sobre sus propias
+                creaciones, siempre que les pertenezcan legítimamente.
+            </p>
+
+            <p>
+                Si consideras que una publicación infringe tus derechos,
+                puedes comunicarte con la administración de PkStore
+                para solicitar su revisión.
+            </p>
+
+            <hr>
+
+            <h3>10. Moderación y eliminación de contenido</h3>
+
+            <p>PkStore se reserva el derecho de:</p>
+
+            <ul>
+                <li>Revisar publicaciones denunciadas.</li>
+                <li>Retirar contenido que infrinja estos términos.</li>
+                <li>Eliminar archivos peligrosos.</li>
+                <li>Ocultar comentarios inapropiados.</li>
+                <li>Restringir publicaciones que representen riesgos.</li>
+                <li>Suspender cuentas que incumplan las normas.</li>
+            </ul>
+
+            <p>
+                Siempre que resulte razonable, se procurará informar
+                al usuario afectado sobre las medidas adoptadas
+                y los motivos correspondientes.
+            </p>
+
+            <hr>
+
+            <h3>11. Disponibilidad del servicio</h3>
+
+            <p>
+                PkStore procura mantener sus servicios disponibles,
+                pero no garantiza que la plataforma funcione
+                sin interrupciones.
+            </p>
+
+            <p>Podrían producirse:</p>
+
+            <ul>
+                <li>Mantenimientos técnicos.</li>
+                <li>Errores temporales.</li>
+                <li>Problemas de conexión.</li>
+                <li>Fallos de almacenamiento.</li>
+                <li>Cambios en las funciones disponibles.</li>
+            </ul>
+
+            <p>
+                PkStore podrá modificar, suspender o descontinuar
+                determinadas funciones cuando resulte necesario,
+                respetando las obligaciones legales aplicables.
+            </p>
+
+            <hr>
+
+            <h3>12. Protección de datos y privacidad</h3>
+
+            <p>
+                PkStore podrá recopilar y tratar información necesaria
+                para el funcionamiento de la plataforma, como:
+            </p>
+
+            <ul>
+                <li>Información de registro.</li>
+                <li>Nombre de usuario.</li>
+                <li>Dirección de correo electrónico.</li>
+                <li>Información de publicaciones.</li>
+                <li>Comentarios y valoraciones.</li>
+                <li>Información técnica necesaria para la seguridad y funcionamiento del servicio.</li>
+            </ul>
+
+            <p>
+                El tratamiento de estos datos deberá realizarse
+                conforme a la Política de Privacidad de PkStore
+                y la legislación aplicable.
+            </p>
+
+            <p>
+                La Política de Privacidad constituye un documento
+                independiente de estos términos.
+            </p>
+
+            <hr>
+
+            <h3>13. Seguridad de los usuarios</h3>
+
+            <p>
+                Los usuarios deben tomar precauciones al descargar
+                archivos o acceder a enlaces publicados por terceros.
+            </p>
+
+            <p>Se recomienda:</p>
+
+            <ul>
+                <li>Verificar el origen de los archivos.</li>
+                <li>Utilizar herramientas de seguridad actualizadas.</li>
+                <li>Evitar enlaces sospechosos.</li>
+                <li>No compartir contraseñas.</li>
+                <li>No proporcionar información personal a sitios desconocidos.</li>
+            </ul>
+
+            <p>
+                PkStore podrá tomar medidas para reducir los riesgos,
+                pero no garantiza que todos los archivos y enlaces
+                externos estén libres de amenazas.
+            </p>
+
+            <hr>
+
+            <h3>14. Limitación de responsabilidad</h3>
+
+            <p>
+                En la medida permitida por la legislación aplicable,
+                PkStore no garantiza la calidad, seguridad, disponibilidad
+                o funcionamiento de los contenidos publicados por terceros.
+            </p>
+
+            <p>
+                PkStore no será responsable de daños derivados de
+                contenidos externos o acciones de terceros cuando
+                legalmente no le corresponda asumir dicha responsabilidad.
+            </p>
+
+            <p>
+                Nada de lo establecido en esta sección excluye
+                responsabilidades que no puedan excluirse legalmente.
+            </p>
+
+            <hr>
+
+            <h3>15. Suspensión y eliminación de cuentas</h3>
+
+            <p>
+                PkStore podrá suspender o eliminar cuentas cuando:
+            </p>
+
+            <ul>
+                <li>Se incumplan estos términos.</li>
+                <li>Se realicen actividades fraudulentas.</li>
+                <li>Se distribuya contenido peligroso o ilegal.</li>
+                <li>Se abuse de las funciones de la plataforma.</li>
+                <li>Se ponga en riesgo la seguridad de otros usuarios.</li>
+            </ul>
+
+            <p>
+                Los usuarios podrán solicitar la eliminación de sus
+                cuentas mediante los medios de contacto habilitados
+                por la plataforma.
+            </p>
+
+            <p>
+                La eliminación de una cuenta y el tratamiento posterior
+                de sus datos se realizarán conforme a la Política
+                de Privacidad y las obligaciones legales aplicables.
+            </p>
+
+            <hr>
+
+            <h3>16. Modificaciones de los términos</h3>
+
+            <p>
+                PkStore podrá actualizar estos Términos y Condiciones
+                para reflejar cambios en sus servicios, funciones
+                o requisitos legales.
+            </p>
+
+            <p>
+                Cuando se realicen modificaciones importantes,
+                se procurará informar a los usuarios mediante
+                la plataforma u otros medios disponibles.
+            </p>
+
+            <p>
+                La fecha de última actualización aparecerá
+                al principio del documento.
+            </p>
+
+            <hr>
+
+            <h3>17. Legislación aplicable</h3>
+
+            <p>
+                Estos términos deberán interpretarse conforme
+                a las leyes aplicables de la República Dominicana,
+                cuando corresponda, sin perjuicio de las normas
+                obligatorias de protección al consumidor y de
+                protección de datos que puedan resultar aplicables.
+            </p>
+
+            <p>
+                Las controversias se resolverán ante las autoridades
+                competentes conforme a la legislación aplicable.
+            </p>
+
+            <hr>
+
+            <h3>18. Contacto y soporte</h3>
+
+            <p>
+                Si tienes preguntas, deseas denunciar una publicación
+                o necesitas comunicar un problema relacionado con
+                PkStore, puedes contactar con la administración
+                mediante los canales oficiales de soporte de la plataforma.
+            </p>
+
+            <hr>
+
+            <div class="TerminosFinal">
+                <h3>PkStore</h3>
+                <p>
+                    Plataforma de aplicaciones, páginas web y minijuegos.
+                </p>
+                <p>
+                    Al utilizar PkStore, confirmas que has leído
+                    y aceptado estos Términos y Condiciones.
+                </p>
+            </div>
+
+        </div>
+
+        <div class="TerminosFooter">
+            <button type="button" onclick="cerrarTerminos()">Cerrar</button>
+        </div>
+
+    </div>
+
+
+    <script>
+        /* PWA: se registra aquí para que no dependa de que app.js cargue bien */
+        if ("serviceWorker" in navigator) {
+            navigator.serviceWorker.register("sw.js", { scope: "./" })
+                .catch(error => console.log("sin service worker", error));
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+    <script src="datos.js"></script>
+    <script src="nucleo.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
