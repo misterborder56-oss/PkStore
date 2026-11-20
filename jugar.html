@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#121318">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <!-- jugar.js cambia estas dos líneas por las del juego (nombre e icono) -->
+    <link rel="manifest" id="Manifiesto" href="manifest.json">
+    <link rel="apple-touch-icon" id="IconoApple" href="icon-192.png">
+    <link rel="icon" href="icon-192.png">
+    <link rel="stylesheet" href="style.css">
+    <title>PkStore</title>
+</head>
+<body class="body jugador" id="body">
+
+<!------------------------------------
+el juego, a pantalla completa
+------------------------------------>
+    <iframe
+        id="Marco"
+        class="jugador-marco"
+        title="juego"
+        sandbox="allow-scripts allow-forms allow-popups allow-modals"
+        referrerpolicy="no-referrer"
+        hidden
+    ></iframe>
+
+    <button type="button" id="BtnMenu" class="jugador-menu" aria-label="pausa y menú del juego" onclick="PausarJuego()" hidden>⏸</button>
+
+<!------------------------------------
+pausa
+------------------------------------>
+    <div id="Pausa" class="visor-pausa jugador-capa" hidden>
+        <div class="visor-pausa-caja">
+            <h2 id="PausaTitulo">En pausa</h2>
+            <button type="button" class="btn azul chico" onclick="SeguirJuego()">▶ Seguir</button>
+            <button type="button" class="btn chico" onclick="ReiniciarJuego()">↻ Reiniciar</button>
+            <button type="button" class="btn chico" onclick="PantallaCompletaJuego()">⛶ Pantalla completa</button>
+            <button type="button" class="btn chico" onclick="MostrarInstalar()">Agregar a la pantalla principal</button>
+            <button type="button" class="btn peligro chico" onclick="BorrarProgresoJuego()">Borrar progreso</button>
+            <button type="button" class="btn chico" onclick="IrAPkStore()">Ir a PkStore</button>
+        </div>
+    </div>
+
+<!------------------------------------
+agregar a la pantalla principal
+------------------------------------>
+    <div id="Instalar" class="jugador-capa jugador-instalar" hidden>
+        <div class="jugador-tarjeta">
+            <img id="InstalarIcono" class="det-icono" alt="">
+            <h1 id="InstalarNombre"></h1>
+
+            <p class="nota">
+                Agrega este juego a tu pantalla principal para abrirlo directo, sin entrar a PkStore.
+                Queda guardado en tu dispositivo y también abre sin internet.
+            </p>
+
+            <button type="button" id="BtnAgregar" class="btn azul ancho" onclick="AgregarAhora()">Agregar a la pantalla principal</button>
+            <p id="InstruccionesInstalar" class="nota"></p>
+
+            <div class="guardado-botones">
+                <button type="button" class="btn chico" onclick="JugarAhora()">Jugar ahora</button>
+                <button type="button" class="btn chico" onclick="CopiarEnlaceBtn()">Copiar enlace</button>
+                <button type="button" class="btn chico" onclick="IrAPkStore()">Ir a PkStore</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="Mensaje" class="jugador-capa jugador-mensaje">
+        <p id="MensajeTexto">cargando...</p>
+        <button type="button" id="MensajeBoton" class="btn chico" onclick="IrAPkStore()" hidden>Ir a PkStore</button>
+    </div>
+
+    <script>
+        /* PWA: se registra aquí para que no dependa de que los demás archivos carguen bien */
+        if ("serviceWorker" in navigator) {
+            navigator.serviceWorker.register("sw.js", { scope: "./" })
+                .catch(error => console.log("sin service worker", error));
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+    <script src="datos.js"></script>
+    <script src="nucleo.js"></script>
+    <script src="jugar.js"></script>
+</body>
+</html>
